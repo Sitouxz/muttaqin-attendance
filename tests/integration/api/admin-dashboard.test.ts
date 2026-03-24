@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
 
 // Mock Supabase server client — unauthenticated by default
 vi.mock("@/lib/supabase/server", () => ({
@@ -17,27 +16,18 @@ function makeChain(result: unknown) {
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);
   }
-  // Make the chain itself a thenable so `await chain.select(...)` works
   (chain as { then: unknown }).then = (resolve: (v: unknown) => unknown) =>
     Promise.resolve(result).then(resolve);
   return chain;
 }
 
-// Mock service client with chainable mock
-vi.mock("@/lib/supabase/service", () => {
-  const makeChainFactory = (result: unknown) => {
-    const chain = makeChain(result);
-    return chain;
-  };
-
-  return {
-    serviceClient: {
-      from: vi.fn().mockImplementation(() =>
-        makeChain({ count: 0, data: [], error: null })
-      ),
-    },
-  };
-});
+vi.mock("@/lib/supabase/service", () => ({
+  serviceClient: {
+    from: vi.fn().mockImplementation(() =>
+      makeChain({ count: 0, data: [], error: null })
+    ),
+  },
+}));
 
 vi.mock("@/lib/utils/format", () => ({
   todaySGT: vi.fn().mockReturnValue("2026-03-25"),
@@ -59,11 +49,11 @@ describe("GET /api/admin/dashboard/stats", () => {
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
       },
-    } as Awaited<ReturnType<typeof createClient>>);
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const { GET } = await import("@/app/api/admin/dashboard/stats/route");
-    const req = new NextRequest("http://localhost:3000/api/admin/dashboard/stats");
-    const res = await GET(req as Parameters<typeof GET>[0]);
+    // GET() takes no arguments — it reads cookies() internally via Next.js
+    const res = await GET();
     expect(res.status).toBe(401);
   });
 
@@ -75,7 +65,7 @@ describe("GET /api/admin/dashboard/stats", () => {
           data: { user: { id: "user-1", email: "admin@test.com" } },
         }),
       },
-    } as Awaited<ReturnType<typeof createClient>>);
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
 
     const { serviceClient } = await import("@/lib/supabase/service");
     vi.mocked(serviceClient.from).mockImplementation(() =>
@@ -85,8 +75,7 @@ describe("GET /api/admin/dashboard/stats", () => {
     );
 
     const { GET } = await import("@/app/api/admin/dashboard/stats/route");
-    const req = new NextRequest("http://localhost:3000/api/admin/dashboard/stats");
-    const res = await GET(req as Parameters<typeof GET>[0]);
+    const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveProperty("total_participants");

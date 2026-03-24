@@ -43,8 +43,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  // Send OTP email
-  await sendOtpEmail({ email, otp, expiresInMinutes: OTP_TTL_SECONDS / 60 });
+  // Send OTP email (non-fatal — OTP row already exists, user can retry)
+  try {
+    await sendOtpEmail({ email, otp, expiresInMinutes: OTP_TTL_SECONDS / 60 });
+  } catch (emailErr) {
+    console.error("OTP email failed:", emailErr);
+  }
 
   return NextResponse.json({ sent: true });
 }

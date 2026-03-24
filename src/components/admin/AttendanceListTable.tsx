@@ -122,6 +122,7 @@ export function AttendanceListTable({ sessionId }: AttendanceListTableProps) {
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
+    pageCount: Math.ceil(total / pageSize),
   });
 
   const totalPages = Math.ceil(total / pageSize);

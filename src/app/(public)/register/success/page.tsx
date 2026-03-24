@@ -7,7 +7,9 @@ interface SuccessPageProps {
 
 export default async function RegisterSuccessPage({ searchParams }: SuccessPageProps) {
   const params = await searchParams;
-  const name = params.name ? decodeURIComponent(params.name) : null;
+  const name = params.name
+    ? (() => { try { return decodeURIComponent(params.name!); } catch { return params.name!; } })()
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
