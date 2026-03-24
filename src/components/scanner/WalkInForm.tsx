@@ -42,6 +42,12 @@ export function WalkInForm({ sessionId, programmeIds, onSuccess }: WalkInFormPro
     setSubmitting(true);
     try {
       // Step 1: Register participant
+      // Generate a unique placeholder email for walk-ins without a real email
+      const hasEmail = !!data.email;
+      const emailToSend = hasEmail
+        ? data.email!
+        : `walkin.${Date.now()}@walkin.local`;
+
       const regRes = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,7 +56,8 @@ export function WalkInForm({ sessionId, programmeIds, onSuccess }: WalkInFormPro
           phone: data.phone,
           age: Number(data.age),
           postal_code: data.postal_code,
-          email: data.email || "",
+          email: emailToSend,
+          email_consent: hasEmail, // only consent if real email provided
         }),
       });
 
@@ -60,14 +67,15 @@ export function WalkInForm({ sessionId, programmeIds, onSuccess }: WalkInFormPro
         return;
       }
 
-      const { participant } = await regRes.json();
+      // API returns { success: true, participant_id: string }
+      const { participant_id } = await regRes.json();
 
       // Step 2: Check in
       const checkRes = await fetch("/api/check-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          participant_id: participant.id,
+          participant_id,
           session_id: sessionId,
           programme_ids: programmeIds,
           check_in_method: "walk_in",
