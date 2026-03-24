@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #173d35;
+  --color-primary-dark: #0d2720;
+  --color-primary-light: #2f544c;
+  --color-secondary: #735b29;
+  --color-secondary-light: #8c6e33;
+  --color-primary-fg: #ffffff;
+  --shadow-ambient: 0 20px 40px rgba(11, 28, 48, 0.06);
+  --blur-glass: 12px;
+  --radius-card: 1.5rem;
+  --radius-btn: 8px;
+  --background: #fafafa;
+  --foreground: #1a1a1a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
 }
 
 body {
-  background: var(--background);
+  font-family: var(--font-body, "Inter", sans-serif);
+  min-height: 100svh;
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display, "Plus Jakarta Sans", sans-serif);
+}
+
+/* Minimum tap target sizes for accessibility (WCAG 2.5.5) */
+button,
+[role="button"],
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
+/* Gradient CTAs */
+.btn-primary {
+  background: linear-gradient(135deg, #173d35 0%, #2f544c 100%);
+  color: white;
+  border-radius: var(--radius-btn);
+  font-weight: 600;
+}
+
+/* Card style */
+.card-surface {
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-ambient);
+  background: white;
+}
+
+/* Glass overlay */
+.glass {
+  backdrop-filter: blur(var(--blur-glass));
+  background: rgba(255, 255, 255, 0.8);
 }
