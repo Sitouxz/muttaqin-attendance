@@ -13,7 +13,7 @@ function isRateLimited(ip: string): boolean {
   return hits.length > 10;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Rate limiting on registration endpoint
   if (
     request.nextUrl.pathname === "/api/register" &&
