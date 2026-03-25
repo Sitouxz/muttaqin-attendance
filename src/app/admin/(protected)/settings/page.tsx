@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { createClient } from "@/lib/supabase/client";
 import { UserPlus, Trash2, Send, Star } from "lucide-react";
+// createClient still used for invite + deactivate actions
 
 interface AdminUser {
   id: string;
@@ -43,13 +44,11 @@ export default function SettingsPage() {
 
   useEffect(() => {
     async function loadAdmins() {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("admins")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: true });
-      setAdmins(data ?? []);
+      const res = await fetch("/api/admin/admins");
+      if (res.ok) {
+        const json = await res.json();
+        setAdmins(json.admins ?? []);
+      }
       setLoadingAdmins(false);
     }
 

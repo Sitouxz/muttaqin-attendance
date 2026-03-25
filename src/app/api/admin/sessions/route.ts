@@ -5,9 +5,9 @@ import { serviceClient } from "@/lib/supabase/service";
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
@@ -48,9 +48,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    data: { session: authSession },
+  } = await supabase.auth.getSession();
+  if (!authSession) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
   const { session_date, title, start_time, end_time, notes, programme_ids = [] } = body;
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "session_date is required" }, { status: 400 });
   }
 
-  const { data: session, error: sessionError } = await serviceClient
+  const { data: newSession, error: sessionError } = await serviceClient
     .from("sessions")
     .insert({
       session_date,
@@ -79,11 +79,11 @@ export async function POST(request: NextRequest) {
   // Insert session_programmes
   if (programme_ids.length > 0) {
     const spRows = programme_ids.map((pid: string) => ({
-      session_id: session.id,
+      session_id: newSession.id,
       programme_id: pid,
     }));
     await serviceClient.from("session_programmes").insert(spRows);
   }
 
-  return NextResponse.json({ session }, { status: 201 });
+  return NextResponse.json({ session: newSession }, { status: 201 });
 }

@@ -99,9 +99,13 @@ export default function ParticipantDetailPage() {
               <h1 className="text-xl font-bold text-[#173d35]">{participant.full_name}</h1>
               <p className="text-sm text-[#173d35]/60 mt-1">
                 {participant.is_active ? (
-                  <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Aktif / Active</span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700" title="Active">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />Aktif
+                  </span>
                 ) : (
-                  <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">Tidak Aktif / Inactive</span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600" title="Inactive">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />Tidak Aktif
+                  </span>
                 )}
               </p>
             </div>

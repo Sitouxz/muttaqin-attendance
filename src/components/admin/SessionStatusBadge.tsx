@@ -12,11 +12,12 @@ export function SessionStatusBadge({ status }: SessionStatusBadgeProps) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
       style={{ backgroundColor: colour }}
+      title={enLabel}
     >
+      <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
       {myLabel}
-      <span className="opacity-75">/ {enLabel}</span>
     </span>
   );
 }

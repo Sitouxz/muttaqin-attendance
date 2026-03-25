@@ -191,13 +191,14 @@ export default function ProgrammesPage() {
       cell: ({ row }) => (
         <button
           onClick={() => handleToggleActive(row.original)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          title={row.original.is_active ? "Deactivate" : "Activate"}
+          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173d35] focus-visible:ring-offset-2 ${
             row.original.is_active ? "bg-[#173d35]" : "bg-gray-200"
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              row.original.is_active ? "translate-x-6" : "translate-x-1"
+            className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+              row.original.is_active ? "translate-x-[1.125rem]" : "translate-x-0.5"
             }`}
           />
         </button>
@@ -259,7 +260,7 @@ export default function ProgrammesPage() {
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id} className="border-b border-[#f0f4f3]">
                   {hg.headers.map((header) => (
-                    <th key={header.id} className="px-4 py-3 text-left text-sm">
+                    <th key={header.id} className="px-4 py-2.5 text-left text-sm">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -280,7 +281,7 @@ export default function ProgrammesPage() {
                   className="border-b border-[#f0f4f3] hover:bg-[#f0f4f3] transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-sm">
+                    <td key={cell.id} className="px-4 py-2.5 text-sm">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

@@ -5,12 +5,14 @@ import { subDays } from "date-fns";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { SGT_TIMEZONE } from "@/lib/utils/constants";
 
+export const revalidate = 300;
+
 export async function GET() {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -24,38 +26,28 @@ export async function GET() {
     .select("checked_in_at, programme_id, programmes(name, colour)")
     .gte("checked_in_at", `${fromDate}T00:00:00+08:00`);
 
-  // Get all unique programmes
-  const programmeMap = new Map<string, { name: string; colour: string }>();
-  for (const row of rows ?? []) {
-    if (row.programmes && !Array.isArray(row.programmes)) {
-      programmeMap.set(row.programme_id, {
-        name: row.programmes.name,
-        colour: row.programmes.colour,
-      });
-    }
-  }
-
-  // Build date range (last 30 days)
+  // Build date range (last 30 days) and initialize data structure
   const dateRange: string[] = [];
+  const dataMap = new Map<string, Record<string, number>>();
   for (let i = 29; i >= 0; i--) {
     const d = subDays(nowSGT, i);
-    dateRange.push(formatInTimeZone(d, SGT_TIMEZONE, "yyyy-MM-dd"));
+    const dateStr = formatInTimeZone(d, SGT_TIMEZONE, "yyyy-MM-dd");
+    dateRange.push(dateStr);
+    dataMap.set(dateStr, {});
   }
 
-  // Initialize data structure
-  const dataMap = new Map<string, Record<string, number>>();
-  for (const date of dateRange) {
-    dataMap.set(date, {});
-  }
-
-  // Populate counts
+  // Single pass: collect programmes + populate counts
+  const programmeMap = new Map<string, { name: string; colour: string }>();
   for (const row of rows ?? []) {
+    const prog = row.programmes && !Array.isArray(row.programmes) ? row.programmes : null;
+    if (!prog) continue;
+    if (!programmeMap.has(row.programme_id)) {
+      programmeMap.set(row.programme_id, { name: prog.name, colour: prog.colour });
+    }
     const dateKey = formatInTimeZone(new Date(row.checked_in_at), SGT_TIMEZONE, "yyyy-MM-dd");
-    if (!dataMap.has(dateKey)) continue;
-    const progInfo = programmeMap.get(row.programme_id);
-    if (!progInfo) continue;
-    const day = dataMap.get(dateKey)!;
-    day[progInfo.name] = (day[progInfo.name] ?? 0) + 1;
+    const day = dataMap.get(dateKey);
+    if (!day) continue;
+    day[prog.name] = (day[prog.name] ?? 0) + 1;
   }
 
   const data = dateRange.map((date) => ({

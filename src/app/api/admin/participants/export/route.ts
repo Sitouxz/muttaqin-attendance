@@ -8,9 +8,9 @@ import { todaySGT } from "@/lib/utils/format";
 export async function GET(_request: NextRequest) {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: participants, error } = await serviceClient
     .from("participants")

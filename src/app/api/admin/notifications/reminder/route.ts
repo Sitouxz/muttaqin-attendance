@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
   } else {
     const supabase = await createClient();
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) authorized = true;
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session) authorized = true;
   }
 
   if (!authorized) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     "yyyy-MM-dd"
   );
 
-  const { data: session } = await serviceClient
+  const { data: upcomingSession } = await serviceClient
     .from("sessions")
     .select("id, session_date, title, start_time, end_time")
     .in("status", ["active", "draft"])
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     .limit(1)
     .single();
 
-  if (!session) {
+  if (!upcomingSession) {
     return NextResponse.json({ sent: 0, errors: [], message: "No upcoming session found" });
   }
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           email: participant.email,
           qr_image_url: participant.qr_image_url,
         },
-        session,
+        session: upcomingSession,
       });
       sent++;
     } catch (err) {

@@ -1,38 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { loginAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const formData = new FormData(e.currentTarget);
+    const result = await loginAction(formData);
 
-    if (authError) {
-      setError("E-mel atau kata laluan salah / Invalid email or password");
+    if (result?.error) {
+      setError(result.error);
       setLoading(false);
-      return;
     }
-
-    router.push("/admin");
+    // On success, loginAction calls redirect("/admin") — no client code needed
   }
 
   return (
@@ -61,9 +52,8 @@ export default function AdminLoginPage() {
               </Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="min-h-[56px]"
                 placeholder="admin@santunanemas.sg"
@@ -77,9 +67,8 @@ export default function AdminLoginPage() {
               </Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="min-h-[56px]"
                 placeholder="••••••••"

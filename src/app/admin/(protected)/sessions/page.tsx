@@ -242,7 +242,7 @@ export default function SessionsPage() {
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-left text-sm"
+                      className="px-4 py-2.5 text-left text-sm"
                     >
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
@@ -264,7 +264,7 @@ export default function SessionsPage() {
                   className="border-b border-[#f0f4f3] hover:bg-[#f0f4f3] transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-sm">
+                    <td key={cell.id} className="px-4 py-2.5 text-sm">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

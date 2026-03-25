@@ -4,6 +4,8 @@ import { serviceClient } from "@/lib/supabase/service";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { AttendanceTrendChart } from "@/components/admin/AttendanceTrendChart";
 import { todaySGT } from "@/lib/utils/format";
+
+export const revalidate = 30;
 import { SGT_TIMEZONE } from "@/lib/utils/constants";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { startOfMonth } from "date-fns";
@@ -36,7 +38,7 @@ export default async function AdminDashboardPage() {
       .from("attendance")
       .select("id", { count: "exact", head: true })
       .gte("checked_in_at", todayStart.toISOString()),
-    serviceClient.from("attendance").select("programme_id"),
+    serviceClient.from("attendance").select("programme_id, programmes(name)"),
     serviceClient
       .from("attendance")
       .select(
@@ -46,23 +48,21 @@ export default async function AdminDashboardPage() {
       .limit(10),
   ]);
 
-  // Top programme
-  const programmeCounts: Record<string, number> = {};
+  // Top programme — resolved from joined data, no extra query
+  const programmeCounts: Record<string, { count: number; name: string }> = {};
   for (const row of attendanceRows ?? []) {
-    programmeCounts[row.programme_id] = (programmeCounts[row.programme_id] ?? 0) + 1;
+    const prog = !Array.isArray(row.programmes) ? row.programmes : null;
+    if (!prog) continue;
+    const entry = programmeCounts[row.programme_id];
+    if (entry) {
+      entry.count++;
+    } else {
+      programmeCounts[row.programme_id] = { count: 1, name: prog.name };
+    }
   }
-  const topProgrammeId = Object.entries(programmeCounts).sort(
-    ([, a], [, b]) => b - a
-  )[0]?.[0];
-  let topProgrammeName = "—";
-  if (topProgrammeId) {
-    const { data: prog } = await serviceClient
-      .from("programmes")
-      .select("name")
-      .eq("id", topProgrammeId)
-      .single();
-    topProgrammeName = prog?.name ?? "—";
-  }
+  const topProgrammeName = Object.values(programmeCounts).sort(
+    (a, b) => b.count - a.count
+  )[0]?.name ?? "—";
 
   return (
     <div className="p-8">

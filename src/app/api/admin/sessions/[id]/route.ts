@@ -9,9 +9,9 @@ export async function GET(
   const { id } = await params;
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    data: { session: authSession },
+  } = await supabase.auth.getSession();
+  if (!authSession) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: session, error } = await serviceClient
     .from("sessions")
@@ -41,9 +41,9 @@ export async function PATCH(
   const { id } = await params;
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    data: { session: authSession },
+  } = await supabase.auth.getSession();
+  if (!authSession) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
   const { programme_ids, ...fields } = body;
@@ -77,13 +77,13 @@ export async function PATCH(
     }
   }
 
-  const { data: session } = await serviceClient
+  const { data: updatedSession } = await serviceClient
     .from("sessions")
     .select("*, session_programmes(programme_id, programmes(id, name, colour))")
     .eq("id", id)
     .single();
 
-  return NextResponse.json({ session });
+  return NextResponse.json({ session: updatedSession });
 }
 
 export async function DELETE(
@@ -93,9 +93,9 @@ export async function DELETE(
   const { id } = await params;
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    data: { session: authSession },
+  } = await supabase.auth.getSession();
+  if (!authSession) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { error } = await serviceClient
     .from("sessions")

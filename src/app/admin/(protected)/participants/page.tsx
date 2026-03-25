@@ -135,11 +135,13 @@ export default function ParticipantsPage() {
       ),
       cell: ({ row }) => (
         <span
-          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium text-white ${
+          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap ${
             row.original.is_active ? "bg-emerald-500" : "bg-red-400"
           }`}
+          title={row.original.is_active ? "Active" : "Inactive"}
         >
-          {row.original.is_active ? "Aktif / Active" : "Tidak Aktif / Inactive"}
+          <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
+          {row.original.is_active ? "Aktif" : "Tidak Aktif"}
         </span>
       ),
     },
@@ -213,7 +215,7 @@ export default function ParticipantsPage() {
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id} className="border-b border-[#f0f4f3]">
                   {hg.headers.map((header) => (
-                    <th key={header.id} className="px-4 py-3 text-left text-sm">
+                    <th key={header.id} className="px-4 py-2.5 text-left text-sm">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
@@ -234,7 +236,7 @@ export default function ParticipantsPage() {
                   className="border-b border-[#f0f4f3] hover:bg-[#f0f4f3] transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-sm">
+                    <td key={cell.id} className="px-4 py-2.5 text-sm">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
