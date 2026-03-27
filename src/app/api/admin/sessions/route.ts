@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
       title: item.title,
       sort_order: i,
     }));
-    await serviceClient.from("session_agenda").insert(agendaRows);
+    const { error: agendaError } = await serviceClient.from("session_agenda").insert(agendaRows);
+    if (agendaError) return NextResponse.json({ error: agendaError.message }, { status: 500 });
   }
 
   return NextResponse.json({ session: newSession }, { status: 201 });

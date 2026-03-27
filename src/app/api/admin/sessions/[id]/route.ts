@@ -86,14 +86,16 @@ export async function PATCH(
 
   // Sync session_agenda if provided
   if (Array.isArray(agenda)) {
-    await serviceClient.from("session_agenda").delete().eq("session_id", id);
+    const { error: agendaDeleteError } = await serviceClient.from("session_agenda").delete().eq("session_id", id);
+    if (agendaDeleteError) return NextResponse.json({ error: agendaDeleteError.message }, { status: 500 });
     if (agenda.length > 0) {
       const agendaRows = agenda.map((item: { title: string }, i: number) => ({
         session_id: id,
         title: item.title,
         sort_order: i,
       }));
-      await serviceClient.from("session_agenda").insert(agendaRows);
+      const { error: agendaInsertError } = await serviceClient.from("session_agenda").insert(agendaRows);
+      if (agendaInsertError) return NextResponse.json({ error: agendaInsertError.message }, { status: 500 });
     }
   }
 
@@ -103,7 +105,13 @@ export async function PATCH(
     .eq("id", id)
     .single();
 
-  return NextResponse.json({ session: updatedSession });
+  const patchedSessionWithSortedAgenda = {
+    ...updatedSession,
+    session_agenda: (updatedSession?.session_agenda ?? []).sort(
+      (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
+    ),
+  };
+  return NextResponse.json({ session: patchedSessionWithSortedAgenda });
 }
 
 export async function DELETE(
