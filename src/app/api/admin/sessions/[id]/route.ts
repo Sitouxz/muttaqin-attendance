@@ -18,7 +18,8 @@ export async function GET(
     .select(
       `
       *,
-      session_programmes(programme_id, programmes(id, name, colour))
+      session_programmes(programme_id, programmes(id, name, colour)),
+      session_agenda(id, title, sort_order)
       `
     )
     .eq("id", id)
@@ -31,7 +32,13 @@ export async function GET(
     .select("id", { count: "exact", head: true })
     .eq("session_id", id);
 
-  return NextResponse.json({ session, attendance_count: attendanceCount ?? 0 });
+  const sessionWithSortedAgenda = {
+    ...session,
+    session_agenda: (session.session_agenda ?? []).sort(
+      (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
+    ),
+  };
+  return NextResponse.json({ session: sessionWithSortedAgenda, attendance_count: attendanceCount ?? 0 });
 }
 
 export async function PATCH(
@@ -46,7 +53,7 @@ export async function PATCH(
   if (!authSession) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { programme_ids, ...fields } = body;
+  const { programme_ids, agenda, ...fields } = body;
 
   // Update session fields
   const updateData: Record<string, unknown> = {};
@@ -77,9 +84,22 @@ export async function PATCH(
     }
   }
 
+  // Sync session_agenda if provided
+  if (Array.isArray(agenda)) {
+    await serviceClient.from("session_agenda").delete().eq("session_id", id);
+    if (agenda.length > 0) {
+      const agendaRows = agenda.map((item: { title: string }, i: number) => ({
+        session_id: id,
+        title: item.title,
+        sort_order: i,
+      }));
+      await serviceClient.from("session_agenda").insert(agendaRows);
+    }
+  }
+
   const { data: updatedSession } = await serviceClient
     .from("sessions")
-    .select("*, session_programmes(programme_id, programmes(id, name, colour))")
+    .select("*, session_programmes(programme_id, programmes(id, name, colour)), session_agenda(id, title, sort_order)")
     .eq("id", id)
     .single();
 
