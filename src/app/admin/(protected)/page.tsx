@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { AttendanceTrendChart } from "@/components/admin/AttendanceTrendChart";
+import { RegistrantsDashboard } from "@/components/admin/RegistrantsDashboard";
 import { todaySGT } from "@/lib/utils/format";
 
 export const revalidate = 30;
@@ -101,7 +102,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Chart + Recent Activity */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
         {/* Trend Chart */}
         <div className="xl:col-span-2 bg-white rounded-[1.5rem] shadow-ambient p-6">
           <div className="mb-4">
@@ -147,6 +148,15 @@ export default async function AdminDashboardPage() {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Registrants Data Section */}
+      <div className="mb-8">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-[#173d35]">Data Pendaftar</h2>
+          <p className="text-sm text-[#173d35]/60">Registrants Data</p>
+        </div>
+        <RegistrantsDashboard />
       </div>
     </div>
   );

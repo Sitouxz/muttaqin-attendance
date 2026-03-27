@@ -3,7 +3,8 @@ export function generateOtp(): string {
 }
 
 export async function hashOtp(otp: string): Promise<string> {
-  const secret = process.env.SUPABASE_JWT_SECRET ?? "fallback-secret";
+  const secret = process.env.SUPABASE_JWT_SECRET;
+  if (!secret) throw new Error("SUPABASE_JWT_SECRET is not set");
   const data = new TextEncoder().encode(otp + secret);
   const hash = await crypto.subtle.digest("SHA-256", data);
   return Buffer.from(hash).toString("hex");

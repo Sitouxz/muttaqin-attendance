@@ -143,8 +143,10 @@ export type Database = {
           email: string
           email_consent: boolean
           full_name: string
+          gender: string
           id: string
           is_active: boolean
+          participant_category: string
           phone: string
           postal_code: string
           qr_image_url: string | null
@@ -157,8 +159,10 @@ export type Database = {
           email: string
           email_consent?: boolean
           full_name: string
+          gender?: string
           id?: string
           is_active?: boolean
+          participant_category?: string
           phone: string
           postal_code: string
           qr_image_url?: string | null
@@ -171,8 +175,10 @@ export type Database = {
           email?: string
           email_consent?: boolean
           full_name?: string
+          gender?: string
           id?: string
           is_active?: boolean
+          participant_category?: string
           phone?: string
           postal_code?: string
           qr_image_url?: string | null

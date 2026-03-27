@@ -50,6 +50,10 @@ textarea {
   min-height: 44px;
 }
 
+[data-slot="switch"] {
+  min-height: unset;
+}
+
 /* Gradient CTAs */
 .btn-primary {
   background: linear-gradient(135deg, #173d35 0%, #2f544c 100%);

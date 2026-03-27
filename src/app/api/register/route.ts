@@ -54,8 +54,7 @@ export async function POST(req: NextRequest) {
       .eq("id", participant.id);
 
     await sendQrEmail({ ...participant, qr_image_url, qr_token });
-  } catch (emailErr) {
-    console.error("QR email failed:", emailErr);
+  } catch {
     // Non-fatal — registration still succeeded
   }
 

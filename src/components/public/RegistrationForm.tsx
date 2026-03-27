@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { RegisterSchema, type RegisterInput } from "@/lib/validations/participant";
+import { RegisterSchema, type RegisterInput, PARTICIPANT_CATEGORIES } from "@/lib/validations/participant";
 import { BilingualLabel } from "@/components/shared/BilingualLabel";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { cn } from "@/lib/utils/cn";
@@ -26,6 +26,7 @@ export function RegistrationForm() {
   } = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
     defaultValues: {
+      participant_category: undefined,
       email_consent: false,
     },
   });
@@ -151,6 +152,42 @@ export function RegistrationForm() {
         />
         {errors.postal_code && (
           <p className={errorClass}>{errors.postal_code.message}</p>
+        )}
+      </div>
+
+      {/* Participant Category */}
+      <div className="flex flex-col gap-3">
+        <label>
+          <BilingualLabel my="Kategori Peserta" en="Participant Category" />
+        </label>
+        <div className="flex flex-col gap-2">
+          {(
+            [
+              { value: "warga_emas", my: "Warga Emas", en: "Senior Citizen" },
+              { value: "penjaga", my: "Penjaga", en: "Caregiver" },
+              { value: "kedua_dua", my: "Kedua-dua (Warga Emas & Penjaga)", en: "Both (Senior Citizen & Caregiver)" },
+              { value: "selain", my: "Selain yang di atas", en: "Other" },
+            ] as const
+          ).map(({ value, my, en }) => (
+            <label
+              key={value}
+              className={cn(
+                "flex items-center gap-3 min-h-[56px] px-4 rounded-[0.75rem] bg-[#f0f4f3] cursor-pointer transition",
+                errors.participant_category && "ring-2 ring-red-400"
+              )}
+            >
+              <input
+                type="radio"
+                value={value}
+                className="h-5 w-5 accent-[#173d35] cursor-pointer"
+                {...register("participant_category")}
+              />
+              <BilingualLabel my={my} en={en} size="sm" />
+            </label>
+          ))}
+        </div>
+        {errors.participant_category && (
+          <p className={errorClass}>{errors.participant_category.message}</p>
         )}
       </div>
 
