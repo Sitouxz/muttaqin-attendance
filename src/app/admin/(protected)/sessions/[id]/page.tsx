@@ -159,7 +159,7 @@ export default function SessionDetailPage() {
             <p className="text-xs text-[#173d35]/60">Agenda</p>
           </div>
           <ol className="space-y-2">
-            {session.session_agenda.map((item, i) => (
+            {[...session.session_agenda].sort((a, b) => a.sort_order - b.sort_order).map((item, i) => (
               <li key={item.id} className="flex items-start gap-3 text-sm text-[#173d35]">
                 <span className="font-bold text-[#173d35]/40 w-5 shrink-0 text-right">{i + 1}.</span>
                 <span>{item.title}</span>
