@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       notes,
       created_at,
       session_programmes(programme_id, programmes(name, colour)),
-      session_agenda(id, title, sort_order)
+      session_agenda(id, title, sort_order).order(sort_order)
       `,
       { count: "exact" }
     )
