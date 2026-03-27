@@ -69,6 +69,7 @@ function SortableAgendaItem({
     <div ref={setNodeRef} style={style} className="flex items-center gap-2">
       <button
         type="button"
+        aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
         className="cursor-grab text-[#173d35]/30 hover:text-[#173d35]/60 shrink-0"
@@ -83,6 +84,7 @@ function SortableAgendaItem({
       />
       <button
         type="button"
+        aria-label="Remove item"
         onClick={onRemove}
         className="text-[#173d35]/30 hover:text-red-400 shrink-0"
       >
