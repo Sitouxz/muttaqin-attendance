@@ -37,6 +37,7 @@ interface SessionRow {
     programme_id: string;
     programmes: { name: string; colour: string } | null;
   }>;
+  session_agenda: Array<{ id: string; title: string; sort_order: number }>;
 }
 
 export default function SessionsPage() {
@@ -321,6 +322,7 @@ export default function SessionsPage() {
               session_date: editSession.session_date,
               title: editSession.title ?? "",
               programme_ids: editSession.session_programmes?.map((sp) => sp.programme_id) ?? [],
+              agenda: (editSession.session_agenda ?? []).sort((a, b) => a.sort_order - b.sort_order),
             } : undefined}
             onSuccess={() => { setShowForm(false); fetchSessions(); }}
             onCancel={() => setShowForm(false)}

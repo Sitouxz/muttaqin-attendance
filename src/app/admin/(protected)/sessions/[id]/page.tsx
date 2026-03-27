@@ -21,6 +21,7 @@ interface SessionDetail {
     programme_id: string;
     programmes: { id: string; name: string; colour: string } | null;
   }>;
+  session_agenda: Array<{ id: string; title: string; sort_order: number }>;
 }
 
 export default function SessionDetailPage() {
@@ -149,6 +150,24 @@ export default function SessionDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Agenda */}
+      {session.session_agenda?.length > 0 && (
+        <div className="bg-white rounded-[1.5rem] shadow-ambient p-6 mb-6">
+          <div className="mb-4">
+            <h2 className="font-bold text-[#173d35]">Aturcara</h2>
+            <p className="text-xs text-[#173d35]/60">Agenda</p>
+          </div>
+          <ol className="space-y-2">
+            {session.session_agenda.map((item, i) => (
+              <li key={item.id} className="flex items-start gap-3 text-sm text-[#173d35]">
+                <span className="font-bold text-[#173d35]/40 w-5 shrink-0 text-right">{i + 1}.</span>
+                <span>{item.title}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {/* Attendance List */}
       <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">

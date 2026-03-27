@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
       end_time,
       notes,
       created_at,
-      session_programmes(programme_id, programmes(name, colour))
+      session_programmes(programme_id, programmes(name, colour)),
+      session_agenda(id, title, sort_order)
       `,
       { count: "exact" }
     )
