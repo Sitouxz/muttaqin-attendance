@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
   if (!authSession) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { session_date, title, start_time, end_time, notes, programme_ids = [] } = body;
+  const { session_date, title, start_time, end_time, notes, programme_ids = [], agenda = [] } = body;
 
   if (!session_date) {
     return NextResponse.json({ error: "session_date is required" }, { status: 400 });
@@ -83,6 +83,16 @@ export async function POST(request: NextRequest) {
       programme_id: pid,
     }));
     await serviceClient.from("session_programmes").insert(spRows);
+  }
+
+  // Insert session_agenda
+  if (agenda.length > 0) {
+    const agendaRows = agenda.map((item: { title: string }, i: number) => ({
+      session_id: newSession.id,
+      title: item.title,
+      sort_order: i,
+    }));
+    await serviceClient.from("session_agenda").insert(agendaRows);
   }
 
   return NextResponse.json({ session: newSession }, { status: 201 });
