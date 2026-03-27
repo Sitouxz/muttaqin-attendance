@@ -1,6 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +28,11 @@ interface Programme {
   colour: string;
 }
 
+interface AgendaItem {
+  _key: string;
+  title: string;
+}
+
 interface SessionFormData {
   id?: string;
   session_date: string;
@@ -20,13 +41,55 @@ interface SessionFormData {
   end_time: string;
   notes: string;
   programme_ids: string[];
+  agenda: AgendaItem[];
   status?: string;
 }
 
 interface SessionFormProps {
-  initialData?: Partial<SessionFormData>;
+  initialData?: Partial<Omit<SessionFormData, "agenda">> & {
+    agenda?: Array<{ id: string; title: string; sort_order: number }>;
+  };
   onSuccess: () => void;
   onCancel: () => void;
+}
+
+function SortableAgendaItem({
+  item,
+  onChange,
+  onRemove,
+}: {
+  item: AgendaItem;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item._key });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="cursor-grab text-[#173d35]/30 hover:text-[#173d35]/60 shrink-0"
+      >
+        <GripVertical className="size-4" />
+      </button>
+      <Input
+        value={item.title}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Tajuk aktiviti / Activity title"
+        className="flex-1 min-h-[40px] text-sm"
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-[#173d35]/30 hover:text-red-400 shrink-0"
+      >
+        <X className="size-4" />
+      </button>
+    </div>
+  );
 }
 
 export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormProps) {
@@ -35,6 +98,8 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
   const [loadingProgs, setLoadingProgs] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const sensors = useSensors(useSensor(PointerSensor));
+
   const [form, setForm] = useState<SessionFormData>({
     session_date: initialData?.session_date ?? "",
     title: initialData?.title ?? "",
@@ -42,6 +107,10 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
     end_time: initialData?.end_time ?? "",
     notes: initialData?.notes ?? "",
     programme_ids: initialData?.programme_ids ?? [],
+    agenda: (initialData?.agenda ?? []).map((item) => ({
+      _key: item.id,
+      title: item.title,
+    })),
   });
 
   useEffect(() => {
@@ -65,6 +134,40 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
     }));
   }
 
+  function addAgendaItem() {
+    setForm((prev) => ({
+      ...prev,
+      agenda: [...prev.agenda, { _key: crypto.randomUUID(), title: "" }],
+    }));
+  }
+
+  function updateAgendaItem(key: string, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      agenda: prev.agenda.map((item) =>
+        item._key === key ? { ...item, title: value } : item
+      ),
+    }));
+  }
+
+  function removeAgendaItem(key: string) {
+    setForm((prev) => ({
+      ...prev,
+      agenda: prev.agenda.filter((item) => item._key !== key),
+    }));
+  }
+
+  function handleAgendaDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setForm((prev) => {
+        const oldIndex = prev.agenda.findIndex((i) => i._key === active.id);
+        const newIndex = prev.agenda.findIndex((i) => i._key === over.id);
+        return { ...prev, agenda: arrayMove(prev.agenda, oldIndex, newIndex) };
+      });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -78,7 +181,10 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        agenda: form.agenda.map(({ title }) => ({ title })),
+      }),
     });
 
     if (!res.ok) {
@@ -199,6 +305,36 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
           className="w-full min-h-[80px] px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#173d35]/20"
           placeholder="Nota tambahan..."
         />
+      </div>
+
+      {/* Agenda */}
+      <div className="space-y-2">
+        <Label>
+          <span className="font-bold text-[#173d35]">Aturcara</span>
+          <span className="block text-xs text-[#173d35]/60">Agenda / Rundown (optional)</span>
+        </Label>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAgendaDragEnd}>
+          <SortableContext items={form.agenda.map((i) => i._key)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {form.agenda.map((item) => (
+                <SortableAgendaItem
+                  key={item._key}
+                  item={item}
+                  onChange={(value) => updateAgendaItem(item._key, value)}
+                  onRemove={() => removeAgendaItem(item._key)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+        <button
+          type="button"
+          onClick={addAgendaItem}
+          className="flex items-center gap-1.5 text-sm text-[#173d35]/60 hover:text-[#173d35] transition-colors"
+        >
+          <Plus className="size-3.5" />
+          <span>Tambah Item / Add Item</span>
+        </button>
       </div>
 
       {error && (
