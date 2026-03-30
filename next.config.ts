@@ -11,6 +11,18 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ hostname: "*.supabase.co" }],
   },
+  redirects: async () => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) return [];
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "header", key: "x-forwarded-proto", value: "http" }],
+        destination: `${appUrl}/:path*`,
+        permanent: true,
+      },
+    ];
+  },
   headers: async () => [
     {
       source: "/(.*)",
