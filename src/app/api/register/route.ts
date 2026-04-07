@@ -38,23 +38,29 @@ export async function POST(req: NextRequest) {
   // Generate and upload QR PNG (named by qr_token per spec)
   try {
     const qrBuffer = await generateQrPng(qr_token);
-    await serviceClient.storage
+    const { error: uploadError } = await serviceClient.storage
       .from("qr-codes")
       .upload(`${qr_token}.png`, qrBuffer, { contentType: "image/png", upsert: true });
 
-    const { data: urlData } = serviceClient.storage
-      .from("qr-codes")
-      .getPublicUrl(`${qr_token}.png`);
+    if (uploadError) {
+      console.error("QR Upload Error:", uploadError);
+      // Still attempt to send email if registration succeeded
+    } else {
+      const { data: urlData } = serviceClient.storage
+        .from("qr-codes")
+        .getPublicUrl(`${qr_token}.png`);
 
-    const qr_image_url = urlData.publicUrl;
+      const qr_image_url = urlData.publicUrl;
 
-    await serviceClient
-      .from("participants")
-      .update({ qr_image_url })
-      .eq("id", participant.id);
+      await serviceClient
+        .from("participants")
+        .update({ qr_image_url })
+        .eq("id", participant.id);
 
-    await sendQrEmail({ ...participant, qr_image_url, qr_token });
-  } catch {
+      await sendQrEmail({ ...participant, qr_image_url, qr_token });
+    }
+  } catch (err) {
+    console.error("QR Generation/Email Error:", err);
     // Non-fatal — registration still succeeded
   }
 

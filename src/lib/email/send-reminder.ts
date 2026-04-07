@@ -11,7 +11,7 @@ export async function sendReminderEmail(params: {
   };
 }) {
   return resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "noreply@santunanemas.sg",
+    from: process.env.RESEND_FROM_EMAIL ?? "info@santunanemas.sg",
     to: params.participant.email,
     subject: "Peringatan Sesi Minggu Ini / This Week's Session Reminder",
     react: ReminderEmail(params),

@@ -8,7 +8,7 @@ export async function sendQrEmail(participant: {
   qr_token: string;
 }) {
   return resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "noreply@santunanemas.sg",
+    from: process.env.RESEND_FROM_EMAIL ?? "info@santunanemas.sg",
     to: participant.email,
     subject: "QR Code Pendaftaran Anda / Your Registration QR Code",
     react: QrEmail({ participant }),

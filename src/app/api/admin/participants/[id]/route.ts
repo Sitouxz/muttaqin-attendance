@@ -81,12 +81,23 @@ export async function DELETE(
   } = await supabase.auth.getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // 1. Delete associated records first to avoid FK constraint violations
+  // Clear attendance
+  await serviceClient.from("attendance").delete().eq("participant_id", id);
+
+  // 2. Hard delete participant from database
   const { error } = await serviceClient
     .from("participants")
-    .update({ is_active: false })
+    .delete()
     .eq("id", id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    return NextResponse.json({ 
+      error: error.message,
+      details: error.details,
+      code: error.code
+    }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }

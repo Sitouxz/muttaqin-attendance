@@ -11,7 +11,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { Eye, Download, Search } from "lucide-react";
+import { Eye, Download, Search, Pencil, Trash2, XCircle, CheckCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { ParticipantForm } from "@/components/admin/ParticipantForm";
 
 interface ParticipantRow {
   id: string;
@@ -21,6 +31,7 @@ interface ParticipantRow {
   age: number;
   postal_code: string;
   is_active: boolean;
+  email_consent: boolean;
   created_at: string;
 }
 
@@ -33,6 +44,11 @@ export default function ParticipantsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [rowSelection, setRowSelection] = useState({});
+
+  // Edit/Action state
+  const [editingParticipant, setEditingParticipant] = useState<ParticipantRow | null>(null);
+  const [acting, setActing] = useState(false);
 
   const pageSize = 20;
 
@@ -84,7 +100,64 @@ export default function ParticipantsPage() {
     setExporting(false);
   }
 
+  async function handleDeleteParticipant(id: string) {
+    if (!confirm("Adakah anda pasti mahu memadamkan peserta ini? / Are you sure you want to delete this participant?")) return;
+    
+    setActing(true);
+    const res = await fetch(`/api/admin/participants/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      fetchParticipants();
+    }
+    setActing(false);
+  }
+
+  async function handleBulkAction(action: "delete" | "deactivate" | "activate") {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) return;
+
+    let confirmMsg = "";
+    if (action === "delete") confirmMsg = `Padamkan ${selectedIds.length} peserta? / Delete ${selectedIds.length} participants?`;
+    else if (action === "deactivate") confirmMsg = `Nyahaktifkan ${selectedIds.length} peserta? / Deactivate ${selectedIds.length} participants?`;
+    else confirmMsg = `Aktifkan ${selectedIds.length} peserta? / Activate ${selectedIds.length} participants?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    setActing(true);
+    const res = await fetch("/api/admin/participants/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selectedIds, action }),
+    });
+
+    if (res.ok) {
+      setRowSelection({});
+      fetchParticipants();
+    }
+    setActing(false);
+  }
+
   const columns: ColumnDef<ParticipantRow>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+          className="border-[#173d35]/20"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="border-[#173d35]/20"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "full_name",
       header: () => (
@@ -154,11 +227,30 @@ export default function ParticipantsPage() {
         </div>
       ),
       cell: ({ row }) => (
-        <Link href={`/admin/participants/${row.original.id}`}>
-          <Button size="icon-sm" variant="ghost" title="View">
-            <Eye className="size-4" />
+        <div className="flex items-center gap-1">
+          <Link href={`/admin/participants/${row.original.id}`}>
+            <Button size="icon-sm" variant="ghost" title="View details">
+              <Eye className="size-4" />
+            </Button>
+          </Link>
+          <Button 
+            size="icon-sm" 
+            variant="ghost" 
+            title="Edit"
+            onClick={() => setEditingParticipant(row.original)}
+          >
+            <Pencil className="size-4" />
           </Button>
-        </Link>
+          <Button 
+            size="icon-sm" 
+            variant="ghost" 
+            title="Delete"
+            className="hover:text-red-500"
+            onClick={() => handleDeleteParticipant(row.original.id)}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -166,20 +258,27 @@ export default function ParticipantsPage() {
   const table = useReactTable({
     data: participants,
     columns,
+    state: {
+      rowSelection,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
     manualPagination: true,
     pageCount: Math.ceil(total / pageSize),
   });
 
   const totalPages = Math.ceil(total / pageSize);
+  const selectedCount = Object.keys(rowSelection).length;
 
   return (
-    <div className="p-8">
+    <div className="p-8 pb-32">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#173d35]">Peserta</h1>
-          <p className="text-sm text-[#173d35]/60">Participants</p>
+          <p className="text-sm text-[#173d35]/60">Participants ({total})</p>
         </div>
         <Button
           onClick={handleExport}
@@ -233,7 +332,7 @@ export default function ParticipantsPage() {
               {table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-[#f0f4f3] hover:bg-[#f0f4f3] transition-colors"
+                  className={`border-b border-[#f0f4f3] transition-colors ${row.getIsSelected() ? "bg-[#f0f4f3]" : "hover:bg-[#f0f4f3]/50"}`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-2.5 text-sm">
@@ -272,6 +371,81 @@ export default function ParticipantsPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk Action Bar */}
+      {selectedCount > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#173d35] text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-6 animate-in slide-in-from-bottom-4 duration-300 z-50">
+          <div className="flex flex-col">
+            <span className="text-sm font-bold">{selectedCount} terpilih</span>
+            <span className="text-[10px] opacity-70">{selectedCount} selected</span>
+          </div>
+          
+          <div className="h-6 w-px bg-white/20" />
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              size="sm" 
+              className="bg-red-500 hover:bg-red-600 text-white gap-2"
+              onClick={() => handleBulkAction("delete")}
+              disabled={acting}
+            >
+              <Trash2 className="size-4" />
+              <span>Padam / Delete</span>
+            </Button>
+            <Button 
+              size="sm" 
+              className="bg-white/10 hover:bg-white/20 text-white gap-2"
+              onClick={() => handleBulkAction("deactivate")}
+              disabled={acting}
+            >
+              <XCircle className="size-4" />
+              <span>Nyahaktif / Deactivate</span>
+            </Button>
+            <Button 
+              size="sm" 
+              className="bg-white/10 hover:bg-white/20 text-white gap-2"
+              onClick={() => handleBulkAction("activate")}
+              disabled={acting}
+            >
+              <CheckCircle className="size-4" />
+              <span>Aktifkan / Activate</span>
+            </Button>
+          </div>
+          
+          <div className="h-6 w-px bg-white/20" />
+          
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="text-white hover:bg-white/10"
+            onClick={() => setRowSelection({})}
+          >
+            Batal / Cancel
+          </Button>
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingParticipant} onOpenChange={(open) => !open && setEditingParticipant(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Kemaskini Peserta</DialogTitle>
+            <DialogDescription>
+              Sunting maklumat peribadi peserta. / Edit participant's personal information.
+            </DialogDescription>
+          </DialogHeader>
+          {editingParticipant && (
+            <ParticipantForm 
+              initialData={editingParticipant}
+              onSuccess={() => {
+                setEditingParticipant(null);
+                fetchParticipants();
+              }}
+              onCancel={() => setEditingParticipant(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

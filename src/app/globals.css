@@ -41,18 +41,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display, "Plus Jakarta Sans", sans-serif);
 }
 
-/* Minimum tap target sizes for accessibility (WCAG 2.5.5) */
-button,
-[role="button"],
-input,
-select,
-textarea {
-  min-height: 44px;
-}
-
-[data-slot="switch"] {
-  min-height: unset;
-}
+/* Custom styles */
 
 /* Gradient CTAs */
 .btn-primary {

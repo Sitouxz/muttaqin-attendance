@@ -40,7 +40,7 @@ export default function SettingsPage() {
   const [savingDefault, setSavingDefault] = useState(false);
   const [defaultMsg, setDefaultMsg] = useState<string | null>(null);
 
-  const fromEmail = process.env.NEXT_PUBLIC_RESEND_FROM_EMAIL ?? "noreply@santunanemas.sg";
+  const fromEmail = process.env.NEXT_PUBLIC_RESEND_FROM_EMAIL ?? "info@santunanemas.sg";
 
   useEffect(() => {
     async function loadAdmins() {
