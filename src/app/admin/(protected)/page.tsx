@@ -69,32 +69,31 @@ export default async function AdminDashboardPage() {
     <div className="p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[#173d35]">Papan Pemuka</h1>
-        <p className="text-sm text-[#173d35]/60">Dashboard</p>
+        <h1 className="text-2xl font-bold text-[#173d35]">Dashboard</h1>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <StatsCard
-          title={{ my: "Jumlah Peserta", en: "Total Participants" }}
+          title="Total Participants"
           value={totalParticipants ?? 0}
           icon={Users}
           colour="#173d35"
         />
         <StatsCard
-          title={{ my: "Sesi Bulan Ini", en: "Sessions This Month" }}
+          title="Sessions This Month"
           value={sessionsThisMonth ?? 0}
           icon={Calendar}
           colour="#735b29"
         />
         <StatsCard
-          title={{ my: "Kehadiran Hari Ini", en: "Attendance Today" }}
+          title="Attendance Today"
           value={attendanceToday ?? 0}
           icon={ClipboardCheck}
           colour="#10B981"
         />
         <StatsCard
-          title={{ my: "Program Terpopular", en: "Most Popular Programme" }}
+          title="Most Popular Programme"
           value={topProgrammeName}
           icon={BookOpen}
           colour="#3B82F6"
@@ -106,8 +105,7 @@ export default async function AdminDashboardPage() {
         {/* Trend Chart */}
         <div className="xl:col-span-2 bg-white rounded-[1.5rem] shadow-ambient p-6">
           <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Trend Kehadiran 30 Hari</h2>
-            <p className="text-xs text-[#173d35]/60">30-Day Attendance Trend</p>
+            <h2 className="font-bold text-[#173d35]">30-Day Attendance Trend</h2>
           </div>
           <AttendanceTrendChart />
         </div>
@@ -115,12 +113,11 @@ export default async function AdminDashboardPage() {
         {/* Recent Activity */}
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
           <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Aktiviti Terkini</h2>
-            <p className="text-xs text-[#173d35]/60">Recent Activity</p>
+            <h2 className="font-bold text-[#173d35]">Recent Activity</h2>
           </div>
           <div className="space-y-3">
             {(recentCheckins ?? []).length === 0 && (
-              <p className="text-sm text-[#173d35]/50 text-center py-4">Tiada aktiviti / No activity</p>
+              <p className="text-sm text-[#173d35]/50 text-center py-4">No activity</p>
             )}
             {(recentCheckins ?? []).map((row) => {
               const participant = !Array.isArray(row.participants) ? row.participants : null;
@@ -153,8 +150,7 @@ export default async function AdminDashboardPage() {
       {/* Registrants Data Section */}
       <div className="mb-8">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-[#173d35]">Data Pendaftar</h2>
-          <p className="text-sm text-[#173d35]/60">Registrants Data</p>
+          <h2 className="text-xl font-bold text-[#173d35]">Registrants Data</h2>
         </div>
         <RegistrantsDashboard />
       </div>

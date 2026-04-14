@@ -73,7 +73,7 @@ export default function SessionsPage() {
   }, [fetchSessions]);
 
   async function handleCancel(id: string) {
-    if (!confirm("Batalkan sesi ini? / Cancel this session?")) return;
+    if (!confirm("Cancel this session?")) return;
     await fetch(`/api/admin/sessions/${id}`, { method: "DELETE" });
     fetchSessions();
   }
@@ -83,8 +83,7 @@ export default function SessionsPage() {
       accessorKey: "session_date",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Tarikh</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Date</div>
+          <div className="font-bold text-[#173d35]">Date</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -95,12 +94,11 @@ export default function SessionsPage() {
       accessorKey: "title",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Tajuk</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Title</div>
+          <div className="font-bold text-[#173d35]">Title</div>
         </div>
       ),
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.title ?? <span className="text-[#173d35]/40 italic">Tanpa Tajuk</span>}</span>
+        <span className="text-sm">{row.original.title ?? <span className="text-[#173d35]/40 italic">Untitled</span>}</span>
       ),
     },
     {
@@ -108,7 +106,6 @@ export default function SessionsPage() {
       header: () => (
         <div>
           <div className="font-bold text-[#173d35]">Status</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Status</div>
         </div>
       ),
       cell: ({ row }) => <SessionStatusBadge status={row.original.status} />,
@@ -117,8 +114,7 @@ export default function SessionsPage() {
       id: "programmes",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Program</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Programmes</div>
+          <div className="font-bold text-[#173d35]">Programmes</div>
         </div>
       ),
       cell: ({ row }) => {
@@ -145,8 +141,7 @@ export default function SessionsPage() {
       id: "actions",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Tindakan</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Actions</div>
+          <div className="font-bold text-[#173d35]">Actions</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -195,16 +190,16 @@ export default function SessionsPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#173d35]">Sesi</h1>
-          <p className="text-sm text-[#173d35]/60">Sessions</p>
+        <div>
+          <h1 className="text-2xl font-bold text-[#173d35]">Sessions</h1>
+        </div>
         </div>
         <Button
           onClick={() => { setEditSession(null); setShowForm(true); }}
           className="bg-[#173d35] hover:bg-[#173d35]/90 text-white"
         >
           <Plus className="size-4" />
-          <span className="font-bold">Sesi Baru</span>
-          <span className="text-white/70">/ New Session</span>
+          <span className="font-bold">New Session</span>
         </Button>
       </div>
 
@@ -220,7 +215,7 @@ export default function SessionsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua / All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {SESSION_STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
@@ -255,7 +250,7 @@ export default function SessionsPage() {
               {table.getRowModel().rows.length === 0 && (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-[#173d35]/40">
-                    Tiada sesi / No sessions
+                    No sessions
                   </td>
                 </tr>
               )}
@@ -280,7 +275,7 @@ export default function SessionsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
           <p className="text-sm text-[#173d35]/60">
-            {total} sesi / sessions
+            {total} sessions
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -289,7 +284,7 @@ export default function SessionsPage() {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Sebelum / Prev
+              Prev
             </Button>
             <span className="text-sm text-[#173d35]">
               {page} / {totalPages}
@@ -300,7 +295,7 @@ export default function SessionsPage() {
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Seterus / Next
+              Next
             </Button>
           </div>
         </div>
@@ -311,9 +306,7 @@ export default function SessionsPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              <span className="font-bold text-[#173d35]">
-                {editSession ? "Kemaskini Sesi / Edit Session" : "Sesi Baru / New Session"}
-              </span>
+                {editSession ? "Edit Session" : "New Session"}
             </DialogTitle>
           </DialogHeader>
           <SessionForm

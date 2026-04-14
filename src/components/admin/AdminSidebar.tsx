@@ -18,39 +18,33 @@ const navLinks = [
   {
     href: "/admin",
     icon: LayoutDashboard,
-    my: "Papan Pemuka",
-    en: "Dashboard",
+    label: "Dashboard",
     exact: true,
   },
   {
     href: "/admin/sessions",
     icon: Calendar,
-    my: "Sesi",
-    en: "Sessions",
+    label: "Sessions",
   },
   {
     href: "/admin/participants",
     icon: Users,
-    my: "Peserta",
-    en: "Participants",
+    label: "Participants",
   },
   {
     href: "/admin/attendance",
     icon: ClipboardCheck,
-    my: "Kehadiran",
-    en: "Attendance",
+    label: "Attendance",
   },
   {
     href: "/admin/programmes",
     icon: BookOpen,
-    my: "Program",
-    en: "Programmes",
+    label: "Programmes",
   },
   {
     href: "/admin/settings",
     icon: Settings,
-    my: "Tetapan",
-    en: "Settings",
+    label: "Settings",
   },
 ];
 
@@ -102,8 +96,7 @@ export function AdminSidebar() {
             >
               <Icon className="size-5 shrink-0" />
               <div className="flex flex-col">
-                <span className="text-sm font-medium leading-tight">{link.my}</span>
-                <span className="text-xs text-white/50 leading-tight">{link.en}</span>
+                <span className="text-sm font-medium leading-tight">{(link as any).label}</span>
               </div>
             </Link>
           );
@@ -118,8 +111,7 @@ export function AdminSidebar() {
         >
           <LogOut className="size-5 shrink-0" />
           <div className="flex flex-col text-left">
-            <span className="text-sm font-medium leading-tight">Log Keluar</span>
-            <span className="text-xs text-white/50 leading-tight">Sign Out</span>
+            <span className="text-sm font-medium leading-tight">Sign Out</span>
           </div>
         </button>
       </div>

@@ -14,7 +14,6 @@ export async function GET() {
       "*, session_programmes(programme_id, programmes(id, name, colour, is_default))"
     )
     .eq("status", "active")
-    .eq("session_date", today)
     .limit(1);
 
   if (error) {

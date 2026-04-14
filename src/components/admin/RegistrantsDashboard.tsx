@@ -26,7 +26,7 @@ const SingaporeLeafletMap = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full h-[400px] bg-[#e8f4f8] rounded-xl flex items-center justify-center">
-        <span className="text-sm text-[#173d35]/50">Memuat peta / Loading map...</span>
+        <span className="text-sm text-[#173d35]/50">Loading map...</span>
       </div>
     ),
   }
@@ -52,17 +52,17 @@ const GENDER_COLOURS: Record<string, string> = {
   unspecified: "#9CA3AF",
 };
 
-const GENDER_LABELS: Record<string, { my: string; en: string }> = {
-  male: { my: "Lelaki", en: "Male" },
-  female: { my: "Perempuan", en: "Female" },
-  unspecified: { my: "Tidak Dinyatakan", en: "Unspecified" },
+const GENDER_LABELS: Record<string, string> = {
+  male: "Male",
+  female: "Female",
+  unspecified: "Unspecified",
 };
 
-const CATEGORY_LABELS: Record<string, { my: string; en: string }> = {
-  warga_emas: { my: "Warga Emas", en: "Senior Citizen" },
-  penjaga: { my: "Penjaga", en: "Caregiver" },
-  kedua_dua: { my: "Kedua-dua", en: "Both" },
-  selain: { my: "Selain", en: "Others" },
+const CATEGORY_LABELS: Record<string, string> = {
+  warga_emas: "Senior Citizen",
+  penjaga: "Caregiver",
+  kedua_dua: "Both",
+  selain: "Others",
 };
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -72,12 +72,12 @@ const CATEGORY_COLOURS: Record<string, string> = {
   selain: "#9CA3AF",
 };
 
-const REGION_LABELS: Record<SGRegion, { my: string; en: string }> = {
-  Central: { my: "Tengah", en: "Central" },
-  East: { my: "Timur", en: "East" },
-  West: { my: "Barat", en: "West" },
-  North: { my: "Utara", en: "North" },
-  "North-East": { my: "Timur Laut", en: "North-East" },
+const REGION_LABELS: Record<SGRegion, string> = {
+  Central: "Central",
+  East: "East",
+  West: "West",
+  North: "North",
+  "North-East": "North-East",
 };
 
 // --------------- Custom Tooltip ---------------
@@ -128,8 +128,7 @@ export function RegistrantsDashboard() {
     return (
       <div className="flex items-center justify-center h-64 text-[#173d35]/50 text-sm">
         <div className="text-center">
-          <p className="font-bold">Tiada data pendaftaran</p>
-          <p>No registration data</p>
+          <p className="font-bold">No registration data</p>
         </div>
       </div>
     );
@@ -139,7 +138,7 @@ export function RegistrantsDashboard() {
   const genderData = Object.entries(data.gender)
     .filter(([, v]) => v > 0)
     .map(([key, value]) => ({
-      name: GENDER_LABELS[key]?.my ?? key,
+      name: GENDER_LABELS[key] ?? key,
       value,
       fill: GENDER_COLOURS[key] ?? "#9CA3AF",
     }));
@@ -147,8 +146,7 @@ export function RegistrantsDashboard() {
   const categoryData = Object.entries(data.category)
     .filter(([, v]) => v > 0)
     .map(([key, value]) => ({
-      name: CATEGORY_LABELS[key]?.my ?? key,
-      nameEn: CATEGORY_LABELS[key]?.en ?? key,
+      name: CATEGORY_LABELS[key] ?? key,
       value,
       fill: CATEGORY_COLOURS[key] ?? "#9CA3AF",
     }));
@@ -160,11 +158,10 @@ export function RegistrantsDashboard() {
         {/* Gender Donut */}
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
           <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Jantina Peserta</h2>
-            <p className="text-xs text-[#173d35]/60">Participant Gender</p>
+            <h2 className="font-bold text-[#173d35]">Participant Gender</h2>
           </div>
           {genderData.length === 0 ? (
-            <p className="text-sm text-[#173d35]/50 text-center py-8">Tiada data / No data</p>
+            <p className="text-sm text-[#173d35]/50 text-center py-8">No data</p>
           ) : (
             <div className="flex items-center gap-6">
               <ResponsiveContainer width="60%" height={200}>
@@ -195,10 +192,7 @@ export function RegistrantsDashboard() {
                     />
                     <div>
                       <p className="text-sm font-medium text-[#173d35] leading-tight">
-                        {GENDER_LABELS[key]?.my}
-                      </p>
-                      <p className="text-xs text-[#173d35]/60 leading-tight">
-                        {GENDER_LABELS[key]?.en}
+                        {GENDER_LABELS[key]}
                       </p>
                     </div>
                     <span className="text-lg font-bold text-[#173d35] ml-2">{value}</span>
@@ -212,11 +206,10 @@ export function RegistrantsDashboard() {
         {/* Participant Category */}
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
           <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Kategori Peserta</h2>
-            <p className="text-xs text-[#173d35]/60">Participant Category</p>
+            <h2 className="font-bold text-[#173d35]">Participant Category</h2>
           </div>
           {categoryData.length === 0 ? (
-            <p className="text-sm text-[#173d35]/50 text-center py-8">Tiada data / No data</p>
+            <p className="text-sm text-[#173d35]/50 text-center py-8">No data</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={categoryData} layout="vertical" margin={{ left: 0, right: 20 }}>
@@ -228,12 +221,7 @@ export function RegistrantsDashboard() {
                   tick={{ fontSize: 11, fill: "#173d35" }}
                   width={100}
                 />
-                <Tooltip
-                  formatter={(value, _name, props) => [
-                    value,
-                    (props.payload as { nameEn?: string })?.nameEn ?? _name,
-                  ]}
-                />
+                <Tooltip />
                 <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24}>
                   {categoryData.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
@@ -248,8 +236,7 @@ export function RegistrantsDashboard() {
       {/* Row 2: Registration Trend */}
       <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
         <div className="mb-4">
-          <h2 className="font-bold text-[#173d35]">Trend Pendaftaran 30 Hari</h2>
-          <p className="text-xs text-[#173d35]/60">30-Day Registration Trend</p>
+          <h2 className="font-bold text-[#173d35]">30-Day Registration Trend</h2>
         </div>
         <ResponsiveContainer width="100%" height={250}>
           <AreaChart data={data.registrationTrend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -272,9 +259,9 @@ export function RegistrantsDashboard() {
             <Tooltip
               labelFormatter={(label) => {
                 const d = new Date(String(label));
-                return d.toLocaleDateString("ms-MY", { day: "numeric", month: "short", year: "numeric" });
+                return d.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" });
               }}
-              formatter={(value) => [value, "Pendaftaran"]}
+              formatter={(value) => [value, "Registrations"]}
             />
             <Area
               type="monotone"
@@ -292,8 +279,8 @@ export function RegistrantsDashboard() {
         {/* Region Bar Chart */}
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
           <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Taburan Kawasan</h2>
-            <p className="text-xs text-[#173d35]/60">Region Distribution (by Postal Code)</p>
+            <h2 className="font-bold text-[#173d35]">Region Distribution</h2>
+            <p className="text-xs text-[#173d35]/60">by Postal Code</p>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data.regions} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -301,12 +288,12 @@ export function RegistrantsDashboard() {
               <XAxis
                 dataKey="name"
                 tick={{ fontSize: 11, fill: "#6b7280" }}
-                tickFormatter={(val: string) => REGION_LABELS[val as SGRegion]?.my ?? val}
+                tickFormatter={(val: string) => REGION_LABELS[val as SGRegion] ?? val}
               />
               <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} allowDecimals={false} />
               <Tooltip
-                formatter={(value) => [value, "Peserta"]}
-                labelFormatter={(label) => REGION_LABELS[label as SGRegion]?.en ?? label}
+                formatter={(value) => [value, "Participants"]}
+                labelFormatter={(label) => REGION_LABELS[label as SGRegion] ?? label}
               />
               <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={40}>
                 {data.regions.map((r) => (
@@ -320,8 +307,8 @@ export function RegistrantsDashboard() {
         {/* Singapore Map */}
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
           <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Peta Peserta</h2>
-            <p className="text-xs text-[#173d35]/60">Participant Map (Singapore)</p>
+            <h2 className="font-bold text-[#173d35]">Participant Map</h2>
+            <p className="text-xs text-[#173d35]/60">Singapore</p>
           </div>
           <SingaporeLeafletMap regions={data.regions} />
         </div>

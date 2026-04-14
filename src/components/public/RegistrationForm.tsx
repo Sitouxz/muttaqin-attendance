@@ -27,7 +27,6 @@ export function RegistrationForm() {
     resolver: zodResolver(RegisterSchema),
     defaultValues: {
       participant_category: undefined,
-      email_consent: false,
     },
   });
 
@@ -136,6 +135,37 @@ export function RegistrationForm() {
           <p className={errorClass}>{errors.age.message}</p>
         )}
       </div>
+      {/* Gender */}
+      <div className="flex flex-col gap-1.5">
+        <label>
+          <BilingualLabel my="Jantina" en="Gender" />
+        </label>
+        <div className="flex gap-4">
+          {[
+            { value: "male", my: "Lelaki", en: "Male" },
+            { value: "female", my: "Perempuan", en: "Female" },
+          ].map((g) => (
+            <label
+              key={g.value}
+              className={cn(
+                "flex-1 flex items-center gap-3 min-h-[56px] px-4 rounded-[0.75rem] bg-[#f0f4f3] cursor-pointer transition",
+                errors.gender && "ring-2 ring-red-400"
+              )}
+            >
+              <input
+                type="radio"
+                value={g.value}
+                className="h-5 w-5 accent-[#173d35] cursor-pointer"
+                {...register("gender")}
+              />
+              <BilingualLabel my={g.my} en={g.en} size="sm" />
+            </label>
+          ))}
+        </div>
+        {errors.gender && (
+          <p className={errorClass}>{errors.gender.message}</p>
+        )}
+      </div>
 
       {/* Postal Code */}
       <div className="flex flex-col gap-1.5">
@@ -191,22 +221,6 @@ export function RegistrationForm() {
         )}
       </div>
 
-      {/* Email Consent */}
-      <div className="flex items-start gap-3 rounded-[0.75rem] bg-[#f0f4f3] p-4">
-        <input
-          id="email_consent"
-          type="checkbox"
-          className="mt-1 h-5 w-5 accent-[#173d35] cursor-pointer"
-          {...register("email_consent")}
-        />
-        <label htmlFor="email_consent" className="cursor-pointer">
-          <BilingualLabel
-            my="Persetujuan Emel"
-            en="I consent to receive updates and communications via email"
-            size="sm"
-          />
-        </label>
-      </div>
 
       {/* Server Error */}
       {serverError && (

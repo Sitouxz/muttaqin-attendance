@@ -13,9 +13,9 @@ interface ParticipantFormData {
   email: string;
   phone: string;
   age: number;
+  gender: "male" | "female" | "unspecified";
   postal_code: string;
   is_active: boolean;
-  email_consent: boolean;
 }
 
 interface ParticipantFormProps {
@@ -33,9 +33,9 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
     email: initialData?.email ?? "",
     phone: initialData?.phone ?? "",
     age: initialData?.age ?? 18,
+    gender: (initialData as any)?.gender ?? "unspecified",
     postal_code: initialData?.postal_code ?? "",
     is_active: initialData?.is_active ?? true,
-    email_consent: initialData?.email_consent ?? false,
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -54,7 +54,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      setError(json.error ?? "Ralat berlaku / An error occurred");
+      setError(json.error ?? "An error occurred");
       setLoading(false);
       return;
     }
@@ -67,15 +67,14 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
       {/* Full Name */}
       <div className="space-y-1">
         <Label htmlFor="full_name">
-          <span className="font-bold text-[#173d35]">Nama Penuh</span>
-          <span className="block text-xs text-[#173d35]/60">Full Name</span>
+          <span className="font-bold text-[#173d35]">Full Name</span>
         </Label>
         <Input
           id="full_name"
           required
           value={form.full_name}
           onChange={(e) => setForm((p) => ({ ...p, full_name: e.target.value }))}
-          placeholder="Masukkan nama penuh..."
+          placeholder="Enter full name..."
           className="min-h-[48px]"
         />
       </div>
@@ -83,8 +82,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
       {/* Email */}
       <div className="space-y-1">
         <Label htmlFor="email">
-          <span className="font-bold text-[#173d35]">E-mel</span>
-          <span className="block text-xs text-[#173d35]/60">Email</span>
+          <span className="font-bold text-[#173d35]">Email</span>
         </Label>
         <Input
           id="email"
@@ -101,8 +99,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label htmlFor="phone">
-            <span className="font-bold text-[#173d35]">Telefon</span>
-            <span className="block text-xs text-[#173d35]/60">Phone</span>
+            <span className="font-bold text-[#173d35]">Phone</span>
           </Label>
           <Input
             id="phone"
@@ -115,8 +112,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
         </div>
         <div className="space-y-1">
           <Label htmlFor="age">
-            <span className="font-bold text-[#173d35]">Umur</span>
-            <span className="block text-xs text-[#173d35]/60">Age</span>
+            <span className="font-bold text-[#173d35]">Age</span>
           </Label>
           <Input
             id="age"
@@ -133,8 +129,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
       {/* Postal Code */}
       <div className="space-y-1">
         <Label htmlFor="postal_code">
-          <span className="font-bold text-[#173d35]">Poskod</span>
-          <span className="block text-xs text-[#173d35]/60">Postal Code</span>
+          <span className="font-bold text-[#173d35]">Postal Code</span>
         </Label>
         <Input
           id="postal_code"
@@ -146,26 +141,32 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
         />
       </div>
 
-      {/* Status & Consent Swathes */}
-      <div className="grid grid-cols-2 gap-4 pt-2">
+      {/* Gender */}
+      <div className="space-y-1">
+        <Label htmlFor="gender">
+          <span className="font-bold text-[#173d35]">Gender</span>
+        </Label>
+        <select
+          id="gender"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+          value={form.gender}
+          onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as any }))}
+        >
+          <option value="unspecified">Unspecified</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+
+      {/* Status Swathes */}
+      <div className="pt-2">
         <div className="flex items-center justify-between p-3 bg-[#f0f4f3] rounded-lg">
           <div>
-            <p className="text-xs font-bold text-[#173d35]">Status Aktif</p>
-            <p className="text-[10px] text-[#173d35]/60">Active Status</p>
+            <p className="text-xs font-bold text-[#173d35]">Active Status</p>
           </div>
           <Switch
             checked={form.is_active}
             onCheckedChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
-          />
-        </div>
-        <div className="flex items-center justify-between p-3 bg-[#f0f4f3] rounded-lg">
-          <div>
-            <p className="text-xs font-bold text-[#173d35]">Persetujuan</p>
-            <p className="text-[10px] text-[#173d35]/60">Email Consent</p>
-          </div>
-          <Switch
-            checked={form.email_consent}
-            onCheckedChange={(checked) => setForm((p) => ({ ...p, email_consent: checked }))}
           />
         </div>
       </div>
@@ -182,7 +183,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
           disabled={loading}
           className="flex-1 bg-[#173d35] hover:bg-[#173d35]/90 text-white"
         >
-          {loading ? <LoadingSpinner size="sm" className="text-white" /> : "Simpan / Save"}
+          {loading ? <LoadingSpinner size="sm" className="text-white" /> : "Save"}
         </Button>
         <Button
           type="button"
@@ -190,7 +191,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
           onClick={onCancel}
           className="flex-1"
         >
-          Batal / Cancel
+          Cancel
         </Button>
       </div>
     </form>

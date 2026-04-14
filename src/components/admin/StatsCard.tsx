@@ -2,7 +2,7 @@ import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 interface StatsCardProps {
-  title: { my: string; en: string };
+  title: string;
   value: number | string;
   icon: LucideIcon;
   colour?: string;
@@ -20,8 +20,7 @@ export function StatsCard({ title, value, icon: Icon, colour = "#173d35", classN
       </div>
       <div className="min-w-0">
         <div className="flex flex-col gap-0.5 mb-2">
-          <span className="text-sm font-bold text-[#173d35] leading-tight">{title.my}</span>
-          <span className="text-xs text-[#173d35]/60 leading-tight">{title.en}</span>
+          <span className="text-sm font-bold text-[#173d35] leading-tight">{title}</span>
         </div>
         <p className="text-3xl font-bold text-[#173d35]">{value}</p>
       </div>

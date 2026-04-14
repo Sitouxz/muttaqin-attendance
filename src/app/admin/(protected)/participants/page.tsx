@@ -29,9 +29,9 @@ interface ParticipantRow {
   email: string;
   phone: string;
   age: number;
+  gender: "male" | "female" | "unspecified";
   postal_code: string;
   is_active: boolean;
-  email_consent: boolean;
   created_at: string;
 }
 
@@ -101,7 +101,7 @@ export default function ParticipantsPage() {
   }
 
   async function handleDeleteParticipant(id: string) {
-    if (!confirm("Adakah anda pasti mahu memadamkan peserta ini? / Are you sure you want to delete this participant?")) return;
+    if (!confirm("Are you sure you want to delete this participant?")) return;
     
     setActing(true);
     const res = await fetch(`/api/admin/participants/${id}`, { method: "DELETE" });
@@ -116,9 +116,9 @@ export default function ParticipantsPage() {
     if (selectedIds.length === 0) return;
 
     let confirmMsg = "";
-    if (action === "delete") confirmMsg = `Padamkan ${selectedIds.length} peserta? / Delete ${selectedIds.length} participants?`;
-    else if (action === "deactivate") confirmMsg = `Nyahaktifkan ${selectedIds.length} peserta? / Deactivate ${selectedIds.length} participants?`;
-    else confirmMsg = `Aktifkan ${selectedIds.length} peserta? / Activate ${selectedIds.length} participants?`;
+    if (action === "delete") confirmMsg = `Delete ${selectedIds.length} participants?`;
+    else if (action === "deactivate") confirmMsg = `Deactivate ${selectedIds.length} participants?`;
+    else confirmMsg = `Activate ${selectedIds.length} participants?`;
 
     if (!confirm(confirmMsg)) return;
 
@@ -162,8 +162,7 @@ export default function ParticipantsPage() {
       accessorKey: "full_name",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Nama Penuh</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Full Name</div>
+          <div className="font-bold text-[#173d35]">Full Name</div>
         </div>
       ),
       cell: ({ row }) => <span className="font-medium text-sm">{row.original.full_name}</span>,
@@ -172,8 +171,7 @@ export default function ParticipantsPage() {
       accessorKey: "email",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">E-mel</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Email</div>
+          <div className="font-bold text-[#173d35]">Email</div>
         </div>
       ),
       cell: ({ row }) => <span className="text-sm">{row.original.email}</span>,
@@ -182,8 +180,7 @@ export default function ParticipantsPage() {
       accessorKey: "phone",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Telefon</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Phone</div>
+          <div className="font-bold text-[#173d35]">Phone</div>
         </div>
       ),
       cell: ({ row }) => <span className="text-sm">{row.original.phone}</span>,
@@ -192,18 +189,27 @@ export default function ParticipantsPage() {
       accessorKey: "age",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Umur</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Age</div>
+          <div className="font-bold text-[#173d35]">Age</div>
         </div>
       ),
       cell: ({ row }) => <span className="text-sm">{row.original.age}</span>,
+    },
+    {
+      accessorKey: "gender",
+      header: () => (
+        <div>
+          <div className="font-bold text-[#173d35]">Gender</div>
+        </div>
+      ),
+      cell: ({ row }) => (
+        <span className="text-sm capitalize">{row.original.gender}</span>
+      ),
     },
     {
       accessorKey: "is_active",
       header: () => (
         <div>
           <div className="font-bold text-[#173d35]">Status</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Status</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -214,7 +220,7 @@ export default function ParticipantsPage() {
           title={row.original.is_active ? "Active" : "Inactive"}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
-          {row.original.is_active ? "Aktif" : "Tidak Aktif"}
+          {row.original.is_active ? "Active" : "Inactive"}
         </span>
       ),
     },
@@ -222,8 +228,7 @@ export default function ParticipantsPage() {
       id: "actions",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Tindakan</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Actions</div>
+          <div className="font-bold text-[#173d35]">Actions</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -277,8 +282,10 @@ export default function ParticipantsPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#173d35]">Peserta</h1>
-          <p className="text-sm text-[#173d35]/60">Participants ({total})</p>
+        <div>
+          <h1 className="text-2xl font-bold text-[#173d35]">Participants</h1>
+          <p className="text-sm text-[#173d35]/60">Total: {total}</p>
+        </div>
         </div>
         <Button
           onClick={handleExport}
@@ -287,7 +294,7 @@ export default function ParticipantsPage() {
           className="border-[#173d35] text-[#173d35]"
         >
           {exporting ? <LoadingSpinner size="sm" /> : <Download className="size-4" />}
-          <span className="font-bold">Eksport / Export</span>
+          <span className="font-bold">Export</span>
         </Button>
       </div>
 
@@ -297,7 +304,7 @@ export default function ParticipantsPage() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Cari nama, e-mel, telefon... / Search..."
+          placeholder="Search name, email, phone..."
           className="pl-9 min-h-[44px]"
         />
       </div>
@@ -325,7 +332,7 @@ export default function ParticipantsPage() {
               {table.getRowModel().rows.length === 0 && (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-[#173d35]/40">
-                    Tiada peserta / No participants
+                    No participants
                   </td>
                 </tr>
               )}
@@ -349,7 +356,7 @@ export default function ParticipantsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-[#173d35]/60">{total} peserta / participants</p>
+          <p className="text-sm text-[#173d35]/60">{total} participants</p>
           <div className="flex items-center gap-2">
             <Button
               size="sm"
@@ -357,7 +364,7 @@ export default function ParticipantsPage() {
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Sebelum / Prev
+              Prev
             </Button>
             <span className="text-sm text-[#173d35]">{page} / {totalPages}</span>
             <Button
@@ -366,7 +373,7 @@ export default function ParticipantsPage() {
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Seterus / Next
+              Next
             </Button>
           </div>
         </div>
@@ -376,8 +383,7 @@ export default function ParticipantsPage() {
       {selectedCount > 0 && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#173d35] text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-6 animate-in slide-in-from-bottom-4 duration-300 z-50">
           <div className="flex flex-col">
-            <span className="text-sm font-bold">{selectedCount} terpilih</span>
-            <span className="text-[10px] opacity-70">{selectedCount} selected</span>
+            <span className="text-sm font-bold">{selectedCount} selected</span>
           </div>
           
           <div className="h-6 w-px bg-white/20" />
@@ -390,7 +396,7 @@ export default function ParticipantsPage() {
               disabled={acting}
             >
               <Trash2 className="size-4" />
-              <span>Padam / Delete</span>
+              <span>Delete</span>
             </Button>
             <Button 
               size="sm" 
@@ -399,7 +405,7 @@ export default function ParticipantsPage() {
               disabled={acting}
             >
               <XCircle className="size-4" />
-              <span>Nyahaktif / Deactivate</span>
+              <span>Deactivate</span>
             </Button>
             <Button 
               size="sm" 
@@ -408,7 +414,7 @@ export default function ParticipantsPage() {
               disabled={acting}
             >
               <CheckCircle className="size-4" />
-              <span>Aktifkan / Activate</span>
+              <span>Activate</span>
             </Button>
           </div>
           
@@ -420,7 +426,7 @@ export default function ParticipantsPage() {
             className="text-white hover:bg-white/10"
             onClick={() => setRowSelection({})}
           >
-            Batal / Cancel
+            Cancel
           </Button>
         </div>
       )}
@@ -429,9 +435,9 @@ export default function ParticipantsPage() {
       <Dialog open={!!editingParticipant} onOpenChange={(open) => !open && setEditingParticipant(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Kemaskini Peserta</DialogTitle>
+            <DialogTitle>Edit Participant</DialogTitle>
             <DialogDescription>
-              Sunting maklumat peribadi peserta. / Edit participant's personal information.
+              Update participant's personal information.
             </DialogDescription>
           </DialogHeader>
           {editingParticipant && (
