@@ -90,8 +90,7 @@ export default function AdminLoginPage() {
                 <LoadingSpinner size="sm" className="text-white" />
               ) : (
                 <>
-                  <span className="font-bold">Log Masuk</span>
-                  <span className="text-white/80 ml-1">/ Sign In</span>
+                  <span className="font-bold">Sign In</span>
                 </>
               )}
             </Button>

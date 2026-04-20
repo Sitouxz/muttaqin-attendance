@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
-import { getRegionFromPostalCode, SG_REGIONS, type SGRegion } from "@/lib/utils/sg-regions";
+import { getRegionFromPostalCode, getDistrictFromPostalCode, SG_REGIONS, type SGRegion } from "@/lib/utils/sg-regions";
 
 export const revalidate = 60;
 
@@ -85,6 +85,26 @@ export async function GET() {
     count: regionCounts[name],
   }));
 
+  // --- Postal code → SG district (D01–D28) ---
+  const districtCounts = new Map<number, { name: string; count: number }>();
+  let unknownDistrict = 0;
+  for (const p of rows) {
+    const d = getDistrictFromPostalCode(p.postal_code);
+    if (d) {
+      const existing = districtCounts.get(d.district);
+      if (existing) {
+        existing.count++;
+      } else {
+        districtCounts.set(d.district, { name: d.name, count: 1 });
+      }
+    } else {
+      unknownDistrict++;
+    }
+  }
+  const districts = Array.from(districtCounts.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([number, { name, count }]) => ({ number, name, count }));
+
   return NextResponse.json({
     total,
     gender,
@@ -92,5 +112,7 @@ export async function GET() {
     registrationTrend,
     regions,
     unknownRegion,
+    districts,
+    unknownDistrict,
   });
 }

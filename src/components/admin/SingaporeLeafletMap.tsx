@@ -168,7 +168,7 @@ export function SingaporeLeafletMap({ regions }: SingaporeLeafletMapProps) {
   if (!mounted) {
     return (
       <div className="w-full h-[400px] bg-[#f8fafb] rounded-xl flex items-center justify-center">
-        <span className="text-sm text-[#173d35]/50">Memuat peta / Loading map...</span>
+        <span className="text-sm text-[#173d35]/50">Loading map...</span>
       </div>
     );
   }

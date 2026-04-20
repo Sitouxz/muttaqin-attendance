@@ -113,7 +113,7 @@ export default function ProgrammesPage() {
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      setFormError(json.error ?? "Ralat berlaku / An error occurred");
+      setFormError(json.error ?? "An error occurred");
       setSaving(false);
       return;
     }
@@ -128,8 +128,7 @@ export default function ProgrammesPage() {
       id: "colour",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Warna</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Colour</div>
+          <div className="font-bold text-[#173d35]">Colour</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -146,8 +145,7 @@ export default function ProgrammesPage() {
       accessorKey: "name",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Nama</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Name</div>
+          <div className="font-bold text-[#173d35]">Name</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -163,8 +161,7 @@ export default function ProgrammesPage() {
       accessorKey: "description",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Penerangan</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Description</div>
+          <div className="font-bold text-[#173d35]">Description</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -175,8 +172,7 @@ export default function ProgrammesPage() {
       accessorKey: "sort_order",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Susunan</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Sort Order</div>
+          <div className="font-bold text-[#173d35]">Sort Order</div>
         </div>
       ),
       cell: ({ row }) => <span className="text-sm">{row.original.sort_order}</span>,
@@ -185,8 +181,7 @@ export default function ProgrammesPage() {
       id: "active",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Aktif</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Active</div>
+          <div className="font-bold text-[#173d35]">Active</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -200,8 +195,7 @@ export default function ProgrammesPage() {
       id: "actions",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Tindakan</div>
-          <div className="text-xs text-[#173d35]/60 font-normal">Actions</div>
+          <div className="font-bold text-[#173d35]">Actions</div>
         </div>
       ),
       cell: ({ row }) => (
@@ -227,16 +221,14 @@ export default function ProgrammesPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#173d35]">Program</h1>
-          <p className="text-sm text-[#173d35]/60">Programmes</p>
+          <h1 className="text-2xl font-bold text-[#173d35]">Programmes</h1>
         </div>
         <Button
           onClick={openCreate}
           className="bg-[#173d35] hover:bg-[#173d35]/90 text-white"
         >
           <Plus className="size-4" />
-          <span className="font-bold">Program Baru</span>
-          <span className="text-white/70">/ New Programme</span>
+          <span className="font-bold">New Programme</span>
         </Button>
       </div>
 
@@ -263,7 +255,7 @@ export default function ProgrammesPage() {
               {table.getRowModel().rows.length === 0 && (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-[#173d35]/40">
-                    Tiada program / No programmes
+                    No programmes
                   </td>
                 </tr>
               )}
@@ -290,7 +282,7 @@ export default function ProgrammesPage() {
           <DialogHeader>
             <DialogTitle>
               <span className="font-bold text-[#173d35]">
-                {form.id ? "Kemaskini Program / Edit Programme" : "Program Baru / New Programme"}
+                {form.id ? "Edit Programme" : "New Programme"}
               </span>
             </DialogTitle>
           </DialogHeader>
@@ -299,8 +291,7 @@ export default function ProgrammesPage() {
             {/* Name */}
             <div className="space-y-1">
               <Label htmlFor="prog_name">
-                <span className="font-bold text-[#173d35]">Nama</span>
-                <span className="block text-xs text-[#173d35]/60">Name</span>
+                <span className="font-bold text-[#173d35]">Name</span>
               </Label>
               <Input
                 id="prog_name"
@@ -315,8 +306,7 @@ export default function ProgrammesPage() {
             {/* Description */}
             <div className="space-y-1">
               <Label htmlFor="prog_desc">
-                <span className="font-bold text-[#173d35]">Penerangan</span>
-                <span className="block text-xs text-[#173d35]/60">Description</span>
+                <span className="font-bold text-[#173d35]">Description</span>
               </Label>
               <Input
                 id="prog_desc"
@@ -329,8 +319,7 @@ export default function ProgrammesPage() {
             {/* Colour */}
             <div className="space-y-1">
               <Label htmlFor="prog_colour">
-                <span className="font-bold text-[#173d35]">Warna</span>
-                <span className="block text-xs text-[#173d35]/60">Colour (hex)</span>
+                <span className="font-bold text-[#173d35]">Colour (hex)</span>
               </Label>
               <div className="flex items-center gap-3">
                 <input
@@ -357,8 +346,7 @@ export default function ProgrammesPage() {
             {/* Sort order */}
             <div className="space-y-1">
               <Label htmlFor="prog_sort">
-                <span className="font-bold text-[#173d35]">Susunan</span>
-                <span className="block text-xs text-[#173d35]/60">Sort Order</span>
+                <span className="font-bold text-[#173d35]">Sort Order</span>
               </Label>
               <Input
                 id="prog_sort"
@@ -378,8 +366,7 @@ export default function ProgrammesPage() {
                 className="rounded"
               />
               <div>
-                <span className="text-sm font-bold text-[#173d35]">Program Lalai</span>
-                <span className="block text-xs text-[#173d35]/60">Default Programme</span>
+                <span className="text-sm font-bold text-[#173d35]">Default Programme</span>
               </div>
             </label>
 
@@ -395,7 +382,7 @@ export default function ProgrammesPage() {
                 disabled={saving}
                 className="flex-1 bg-[#173d35] hover:bg-[#173d35]/90 text-white"
               >
-                {saving ? <LoadingSpinner size="sm" className="text-white" /> : (form.id ? "Kemaskini / Update" : "Simpan / Save")}
+                {saving ? <LoadingSpinner size="sm" className="text-white" /> : (form.id ? "Update" : "Save")}
               </Button>
               <Button
                 type="button"
@@ -403,7 +390,7 @@ export default function ProgrammesPage() {
                 onClick={() => setShowForm(false)}
                 className="flex-1"
               >
-                Batal / Cancel
+                Cancel
               </Button>
             </div>
           </form>

@@ -11,7 +11,7 @@ export async function loginAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: "E-mel atau kata laluan salah / Invalid email or password" };
+    return { error: "Invalid email or password" };
   }
 
   redirect("/admin");

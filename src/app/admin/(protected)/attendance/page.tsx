@@ -217,8 +217,7 @@ export default function AttendancePage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#173d35]">Kehadiran</h1>
-          <p className="text-sm text-[#173d35]/60">Attendance</p>
+          <h1 className="text-2xl font-bold text-[#173d35]">Attendance</h1>
         </div>
         <Button
           onClick={handleExport}
@@ -227,7 +226,7 @@ export default function AttendancePage() {
           className="border-[#173d35] text-[#173d35]"
         >
           {exporting ? <LoadingSpinner size="sm" /> : <Download className="size-4" />}
-          <span className="font-bold">Eksport / Export</span>
+          <span className="font-bold">Export</span>
         </Button>
       </div>
 
@@ -236,11 +235,11 @@ export default function AttendancePage() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {/* Session filter */}
           <div>
-            <label className="block text-xs font-bold text-[#173d35] mb-1">Sesi / Session</label>
+            <label className="block text-xs font-bold text-[#173d35] mb-1">Session</label>
             <Select value={sessionId} onValueChange={(v) => { setSessionId(v); setPage(1); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua / All</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {sessions.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.session_date} {s.title ? `— ${s.title}` : ""}
@@ -252,11 +251,11 @@ export default function AttendancePage() {
 
           {/* Programme filter */}
           <div>
-            <label className="block text-xs font-bold text-[#173d35] mb-1">Program / Programme</label>
+            <label className="block text-xs font-bold text-[#173d35] mb-1">Programme</label>
             <Select value={programmeId} onValueChange={(v) => { setProgrammeId(v); setPage(1); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua / All</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {programmes.map((p) => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
@@ -266,7 +265,7 @@ export default function AttendancePage() {
 
           {/* Date from */}
           <div>
-            <label className="block text-xs font-bold text-[#173d35] mb-1">Dari / From</label>
+            <label className="block text-xs font-bold text-[#173d35] mb-1">From</label>
             <Input
               type="date"
               value={dateFrom}
@@ -277,7 +276,7 @@ export default function AttendancePage() {
 
           {/* Date to */}
           <div>
-            <label className="block text-xs font-bold text-[#173d35] mb-1">Hingga / To</label>
+            <label className="block text-xs font-bold text-[#173d35] mb-1">To</label>
             <Input
               type="date"
               value={dateTo}
@@ -288,14 +287,14 @@ export default function AttendancePage() {
 
           {/* Method filter */}
           <div>
-            <label className="block text-xs font-bold text-[#173d35] mb-1">Kaedah / Method</label>
+            <label className="block text-xs font-bold text-[#173d35] mb-1">Method</label>
             <Select value={method} onValueChange={(v) => { setMethod(v); setPage(1); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua / All</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {CHECK_IN_METHODS.map((m) => (
                   <SelectItem key={m} value={m}>
-                    {CHECK_IN_METHOD_LABELS[m].my}
+                    {CHECK_IN_METHOD_LABELS[m].en}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -327,7 +326,7 @@ export default function AttendancePage() {
               {table.getRowModel().rows.length === 0 && (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-[#173d35]/40">
-                    Tiada rekod / No records
+                    No records
                   </td>
                 </tr>
               )}
@@ -351,14 +350,14 @@ export default function AttendancePage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-[#173d35]/60">{total} rekod / records</p>
+          <p className="text-sm text-[#173d35]/60">{total} records</p>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Sebelum / Prev
+              Prev
             </Button>
             <span className="text-sm text-[#173d35]">{page} / {totalPages}</span>
             <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-              Seterus / Next
+              Next
             </Button>
           </div>
         </div>

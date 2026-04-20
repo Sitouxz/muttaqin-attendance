@@ -153,7 +153,7 @@ export function AttendanceListTable({ sessionId }: AttendanceListTableProps) {
           {table.getRowModel().rows.length === 0 && (
             <tr>
               <td colSpan={columns.length} className="px-4 py-12 text-center text-sm text-[#173d35]/40">
-                Tiada kehadiran / No attendance records
+                No attendance records
               </td>
             </tr>
           )}

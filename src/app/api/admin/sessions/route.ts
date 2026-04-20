@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   if (!authSession) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { session_date, title, start_time, end_time, notes, programme_ids = [], agenda = [] } = body;
+  const { session_date, title, start_time, end_time, notes, programme_ids = [], agenda = [], status } = body;
 
   if (!session_date) {
     return NextResponse.json({ error: "session_date is required" }, { status: 400 });
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       start_time: start_time || null,
       end_time: end_time || null,
       notes: notes || null,
-      status: "draft",
+      status: status === "active" ? "active" : "draft",
     })
     .select()
     .single();

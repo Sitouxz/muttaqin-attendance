@@ -69,7 +69,7 @@ export default function SessionDetailPage() {
   if (!session) {
     return (
       <div className="p-8 text-center text-[#173d35]/50">
-        <p className="font-bold">Sesi tidak dijumpai / Session not found</p>
+        <p className="font-bold">Session not found</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function SessionDetailPage() {
       {/* Back */}
       <Link href="/admin/sessions" className="inline-flex items-center gap-2 text-sm text-[#173d35]/60 hover:text-[#173d35] mb-6">
         <ArrowLeft className="size-4" />
-        <span>Kembali / Back</span>
+        <span>Back</span>
       </Link>
 
       {/* Session Info Card */}
@@ -87,7 +87,7 @@ export default function SessionDetailPage() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-[#173d35]">
-              {session.title ?? "Tanpa Tajuk / Untitled"}
+              {session.title ?? "Untitled"}
             </h1>
             <p className="text-sm text-[#173d35]/60 mt-1">{session.session_date}</p>
           </div>
@@ -102,7 +102,7 @@ export default function SessionDetailPage() {
                 className="border-[#173d35] text-[#173d35]"
               >
                 {toggling ? <LoadingSpinner size="sm" /> : (
-                  session.status === "active" ? "Set Draf / Set Draft" : "Set Aktif / Set Active"
+                  session.status === "active" ? "Set Draft" : "Set Active"
                 )}
               </Button>
             )}
@@ -111,15 +111,15 @@ export default function SessionDetailPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
-            <p className="text-xs font-bold text-[#173d35]/60 uppercase tracking-wide mb-1">Masa Mula / Start</p>
+            <p className="text-xs font-bold text-[#173d35]/60 uppercase tracking-wide mb-1">Start</p>
             <p className="text-sm font-medium text-[#173d35]">{session.start_time ?? "—"}</p>
           </div>
           <div>
-            <p className="text-xs font-bold text-[#173d35]/60 uppercase tracking-wide mb-1">Masa Tamat / End</p>
+            <p className="text-xs font-bold text-[#173d35]/60 uppercase tracking-wide mb-1">End</p>
             <p className="text-sm font-medium text-[#173d35]">{session.end_time ?? "—"}</p>
           </div>
           <div>
-            <p className="text-xs font-bold text-[#173d35]/60 uppercase tracking-wide mb-1">Kehadiran / Attendance</p>
+            <p className="text-xs font-bold text-[#173d35]/60 uppercase tracking-wide mb-1">Attendance</p>
             <p className="text-2xl font-bold text-[#173d35]">{attendanceCount}</p>
           </div>
           <div>
@@ -145,7 +145,7 @@ export default function SessionDetailPage() {
 
         {session.notes && (
           <div className="bg-[#f0f4f3] rounded-lg p-3 mt-2">
-            <p className="text-xs font-bold text-[#173d35]/60 mb-1">Nota / Notes</p>
+            <p className="text-xs font-bold text-[#173d35]/60 mb-1">Notes</p>
             <p className="text-sm text-[#173d35]">{session.notes}</p>
           </div>
         )}
@@ -155,8 +155,7 @@ export default function SessionDetailPage() {
       {session.session_agenda?.length > 0 && (
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6 mb-6">
           <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Aturcara</h2>
-            <p className="text-xs text-[#173d35]/60">Agenda</p>
+            <h2 className="font-bold text-[#173d35]">Agenda</h2>
           </div>
           <ol className="space-y-2">
             {[...session.session_agenda].sort((a, b) => a.sort_order - b.sort_order).map((item, i) => (
@@ -172,8 +171,7 @@ export default function SessionDetailPage() {
       {/* Attendance List */}
       <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
         <div className="mb-4">
-          <h2 className="font-bold text-[#173d35]">Senarai Kehadiran</h2>
-          <p className="text-xs text-[#173d35]/60">Attendance List</p>
+          <h2 className="font-bold text-[#173d35]">Attendance List</h2>
         </div>
         <AttendanceListTable sessionId={id} />
       </div>

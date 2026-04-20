@@ -42,6 +42,8 @@ interface RegistrantsData {
   registrationTrend: { date: string; count: number }[];
   regions: { name: SGRegion; count: number }[];
   unknownRegion: number;
+  districts: { number: number; name: string; count: number }[];
+  unknownDistrict: number;
 }
 
 // --------------- Constants ---------------
@@ -99,6 +101,7 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ n
 export function RegistrantsDashboard() {
   const [data, setData] = useState<RegistrantsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [locationTab, setLocationTab] = useState<"region" | "district">("region");
 
   useEffect(() => {
     async function fetchData() {
@@ -274,44 +277,91 @@ export function RegistrantsDashboard() {
         </ResponsiveContainer>
       </div>
 
-      {/* Row 3: Region Distribution + Map */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Region Bar Chart */}
-        <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
-          <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Region Distribution</h2>
+      {/* Row 3: Location Distribution */}
+      <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-bold text-[#173d35]">Location Distribution</h2>
             <p className="text-xs text-[#173d35]/60">by Postal Code</p>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data.regions} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 11, fill: "#6b7280" }}
-                tickFormatter={(val: string) => REGION_LABELS[val as SGRegion] ?? val}
-              />
-              <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} allowDecimals={false} />
-              <Tooltip
-                formatter={(value) => [value, "Participants"]}
-                labelFormatter={(label) => REGION_LABELS[label as SGRegion] ?? label}
-              />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={40}>
-                {data.regions.map((r) => (
-                  <Cell key={r.name} fill={REGION_COLOURS[r.name]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="flex rounded-lg border border-[#e5e7eb] overflow-hidden text-sm">
+            <button
+              onClick={() => setLocationTab("region")}
+              className={`px-3 py-1.5 font-medium transition-colors ${
+                locationTab === "region"
+                  ? "bg-[#173d35] text-white"
+                  : "text-[#173d35]/60 hover:bg-[#f0f4f3]"
+              }`}
+            >
+              Region
+            </button>
+            <button
+              onClick={() => setLocationTab("district")}
+              className={`px-3 py-1.5 font-medium transition-colors ${
+                locationTab === "district"
+                  ? "bg-[#173d35] text-white"
+                  : "text-[#173d35]/60 hover:bg-[#f0f4f3]"
+              }`}
+            >
+              District
+            </button>
+          </div>
         </div>
 
-        {/* Singapore Map */}
-        <div className="bg-white rounded-[1.5rem] shadow-ambient p-6">
-          <div className="mb-4">
-            <h2 className="font-bold text-[#173d35]">Participant Map</h2>
-            <p className="text-xs text-[#173d35]/60">Singapore</p>
+        {locationTab === "region" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={data.regions} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11, fill: "#6b7280" }}
+                  tickFormatter={(val: string) => REGION_LABELS[val as SGRegion] ?? val}
+                />
+                <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} allowDecimals={false} />
+                <Tooltip
+                  formatter={(value) => [value, "Participants"]}
+                  labelFormatter={(label) => REGION_LABELS[label as SGRegion] ?? label}
+                />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={40}>
+                  {data.regions.map((r) => (
+                    <Cell key={r.name} fill={REGION_COLOURS[r.name]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <SingaporeLeafletMap regions={data.regions} />
           </div>
-          <SingaporeLeafletMap regions={data.regions} />
-        </div>
+        ) : (
+          <div className="space-y-1 max-h-[420px] overflow-y-auto pr-1">
+            {data.districts.length === 0 ? (
+              <p className="text-sm text-[#173d35]/50 text-center py-8">No data</p>
+            ) : (
+              data.districts.map((d) => {
+                const pct = data.total > 0 ? (d.count / data.total) * 100 : 0;
+                return (
+                  <div key={d.number} className="flex items-center gap-3 py-1.5">
+                    <span className="text-xs font-mono font-bold text-[#173d35]/60 w-6 shrink-0 text-right">
+                      {String(d.number).padStart(2, "0")}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[#173d35] truncate">{d.name}</p>
+                      <div className="mt-0.5 h-1.5 rounded-full bg-[#f0f4f3] overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#173d35]"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-[#173d35] shrink-0 w-8 text-right">
+                      {d.count}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

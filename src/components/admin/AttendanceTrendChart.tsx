@@ -58,8 +58,7 @@ export function AttendanceTrendChart() {
     return (
       <div className="flex items-center justify-center h-64 text-[#173d35]/50 text-sm">
         <div className="text-center">
-          <p className="font-bold">Tiada data trend</p>
-          <p>No trend data</p>
+          <p className="font-bold">No trend data</p>
         </div>
       </div>
     );

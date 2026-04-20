@@ -55,15 +55,15 @@ export default function ParticipantDetailPage() {
   }, [fetchData]);
 
   async function handleResendQr() {
-    if (!confirm("Jana semula dan hantar QR baru? / Regenerate and send new QR?")) return;
+    if (!confirm("Regenerate and send new QR?")) return;
     setResending(true);
     setResendMsg(null);
     const res = await fetch(`/api/admin/participants/${id}/resend-qr`, { method: "POST" });
     if (res.ok) {
-      setResendMsg("QR berjaya dihantar semula / QR successfully resent");
+      setResendMsg("QR successfully resent");
       await fetchData();
     } else {
-      setResendMsg("Ralat berlaku / An error occurred");
+      setResendMsg("An error occurred");
     }
     setResending(false);
   }
@@ -79,7 +79,7 @@ export default function ParticipantDetailPage() {
   if (!participant) {
     return (
       <div className="p-8 text-center text-[#173d35]/50">
-        <p className="font-bold">Peserta tidak dijumpai / Participant not found</p>
+        <p className="font-bold">Participant not found</p>
       </div>
     );
   }
@@ -88,7 +88,7 @@ export default function ParticipantDetailPage() {
     <div className="p-8">
       <Link href="/admin/participants" className="inline-flex items-center gap-2 text-sm text-[#173d35]/60 hover:text-[#173d35] mb-6">
         <ArrowLeft className="size-4" />
-        <span>Kembali / Back</span>
+        <span>Back</span>
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -100,11 +100,11 @@ export default function ParticipantDetailPage() {
               <p className="text-sm text-[#173d35]/60 mt-1">
                 {participant.is_active ? (
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700" title="Active">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />Aktif
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />Active
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600" title="Inactive">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />Tidak Aktif
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />Inactive
                   </span>
                 )}
               </p>
@@ -117,11 +117,11 @@ export default function ParticipantDetailPage() {
               { my: "Telefon", en: "Phone", value: participant.phone },
               { my: "Umur", en: "Age", value: String(participant.age) },
               { my: "Poskod", en: "Postal Code", value: participant.postal_code },
-              { my: "Persetujuan E-mel", en: "Email Consent", value: participant.email_consent ? "Ya / Yes" : "Tidak / No" },
+              { my: "Persetujuan E-mel", en: "Email Consent", value: participant.email_consent ? "Yes" : "No" },
               { my: "Tarikh Daftar", en: "Registered", value: formatDateSGT(participant.created_at) },
             ].map((field) => (
               <div key={field.my} className="bg-[#f0f4f3] rounded-lg p-3">
-                <p className="text-xs font-bold text-[#173d35]/60 mb-1">{field.my} / {field.en}</p>
+                <p className="text-xs font-bold text-[#173d35]/60 mb-1">{field.en}</p>
                 <p className="text-sm font-medium text-[#173d35]">{field.value}</p>
               </div>
             ))}
@@ -131,8 +131,7 @@ export default function ParticipantDetailPage() {
         {/* QR Code */}
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6 flex flex-col items-center gap-4">
           <div>
-            <p className="font-bold text-[#173d35] text-center">Kod QR</p>
-            <p className="text-xs text-[#173d35]/60 text-center">QR Code</p>
+            <p className="font-bold text-[#173d35] text-center">QR Code</p>
           </div>
 
           {participant.qr_image_url ? (
@@ -143,7 +142,7 @@ export default function ParticipantDetailPage() {
             />
           ) : (
             <div className="w-48 h-48 rounded-lg border-2 border-dashed border-[#173d35]/20 flex items-center justify-center">
-              <p className="text-sm text-[#173d35]/40 text-center">Tiada QR / No QR</p>
+              <p className="text-sm text-[#173d35]/40 text-center">No QR</p>
             </div>
           )}
 
@@ -154,7 +153,7 @@ export default function ParticipantDetailPage() {
               className="inline-flex items-center gap-2 text-sm text-[#173d35] hover:underline"
             >
               <Download className="size-4" />
-              <span>Muat Turun / Download</span>
+              <span>Download</span>
             </a>
           )}
 
@@ -167,14 +166,13 @@ export default function ParticipantDetailPage() {
           >
             {resending ? <LoadingSpinner size="sm" /> : (
               <>
-                <span className="font-bold">Jana Semula</span>
-                <span className="text-[#173d35]/60">/ Resend QR</span>
+                <span className="font-bold">Resend QR</span>
               </>
             )}
           </Button>
 
           {resendMsg && (
-            <p className={`text-xs text-center ${resendMsg.includes("Ralat") ? "text-red-600" : "text-emerald-600"}`}>
+            <p className={`text-xs text-center ${resendMsg.includes("error") ? "text-red-600" : "text-emerald-600"}`}>
               {resendMsg}
             </p>
           )}
@@ -184,13 +182,13 @@ export default function ParticipantDetailPage() {
       {/* Attendance Timeline */}
       <div className="bg-white rounded-[1.5rem] shadow-ambient p-6 mt-6">
         <div className="mb-4">
-          <h2 className="font-bold text-[#173d35]">Sejarah Kehadiran</h2>
-          <p className="text-xs text-[#173d35]/60">Attendance History ({attendance.length} records)</p>
+          <h2 className="font-bold text-[#173d35]">Attendance History</h2>
+          <p className="text-xs text-[#173d35]/60">{attendance.length} records</p>
         </div>
 
         {attendance.length === 0 ? (
           <p className="text-sm text-[#173d35]/40 text-center py-8">
-            Tiada rekod kehadiran / No attendance records
+            No attendance records
           </p>
         ) : (
           <div className="space-y-3">
@@ -217,7 +215,7 @@ export default function ParticipantDetailPage() {
                       </span>
                       <span className="text-xs text-[#173d35]/40">•</span>
                       <span className="text-xs text-[#173d35]/60">
-                        {methodLabel?.my ?? method}
+                        {methodLabel?.en ?? method}
                       </span>
                     </div>
                   </div>

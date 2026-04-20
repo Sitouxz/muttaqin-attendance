@@ -43,6 +43,7 @@ interface SessionFormData {
   programme_ids: string[];
   agenda: AgendaItem[];
   status?: string;
+  activate_immediately: boolean;
 }
 
 interface SessionFormProps {
@@ -79,7 +80,7 @@ function SortableAgendaItem({
       <Input
         value={item.title}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Tajuk aktiviti / Activity title"
+        placeholder="Activity title"
         className="flex-1 min-h-[40px] text-sm"
       />
       <button
@@ -113,6 +114,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       _key: item.id,
       title: item.title,
     })),
+    activate_immediately: false,
   });
 
   useEffect(() => {
@@ -186,12 +188,13 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       body: JSON.stringify({
         ...form,
         agenda: form.agenda.map(({ title }) => ({ title })),
+        status: form.activate_immediately ? "active" : "draft",
       }),
     });
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      setError(json.error ?? "Ralat berlaku / An error occurred");
+      setError(json.error ?? "An error occurred");
       setLoading(false);
       return;
     }
@@ -204,8 +207,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       {/* Date */}
       <div className="space-y-1">
         <Label htmlFor="session_date">
-          <span className="font-bold text-[#173d35]">Tarikh Sesi</span>
-          <span className="block text-xs text-[#173d35]/60">Session Date</span>
+          <span className="font-bold text-[#173d35]">Session Date</span>
         </Label>
         <Input
           id="session_date"
@@ -220,8 +222,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       {/* Title */}
       <div className="space-y-1">
         <Label htmlFor="title">
-          <span className="font-bold text-[#173d35]">Tajuk</span>
-          <span className="block text-xs text-[#173d35]/60">Title (optional)</span>
+          <span className="font-bold text-[#173d35]">Title (optional)</span>
         </Label>
         <Input
           id="title"
@@ -236,8 +237,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label htmlFor="start_time">
-            <span className="font-bold text-[#173d35]">Masa Mula</span>
-            <span className="block text-xs text-[#173d35]/60">Start Time</span>
+            <span className="font-bold text-[#173d35]">Start Time</span>
           </Label>
           <Input
             id="start_time"
@@ -249,8 +249,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
         </div>
         <div className="space-y-1">
           <Label htmlFor="end_time">
-            <span className="font-bold text-[#173d35]">Masa Tamat</span>
-            <span className="block text-xs text-[#173d35]/60">End Time</span>
+            <span className="font-bold text-[#173d35]">End Time</span>
           </Label>
           <Input
             id="end_time"
@@ -265,8 +264,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       {/* Programmes */}
       <div className="space-y-2">
         <Label>
-          <span className="font-bold text-[#173d35]">Program</span>
-          <span className="block text-xs text-[#173d35]/60">Programmes</span>
+          <span className="font-bold text-[#173d35]">Programmes</span>
         </Label>
         {loadingProgs ? (
           <LoadingSpinner size="sm" />
@@ -288,7 +286,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
               </label>
             ))}
             {programmes.length === 0 && (
-              <p className="text-sm text-[#173d35]/50">Tiada program / No programmes</p>
+              <p className="text-sm text-[#173d35]/50">No programmes</p>
             )}
           </div>
         )}
@@ -297,8 +295,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       {/* Notes */}
       <div className="space-y-1">
         <Label htmlFor="notes">
-          <span className="font-bold text-[#173d35]">Nota</span>
-          <span className="block text-xs text-[#173d35]/60">Notes (optional)</span>
+          <span className="font-bold text-[#173d35]">Notes (optional)</span>
         </Label>
         <textarea
           id="notes"
@@ -312,8 +309,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
       {/* Agenda */}
       <div className="space-y-2">
         <Label>
-          <span className="font-bold text-[#173d35]">Aturcara</span>
-          <span className="block text-xs text-[#173d35]/60">Agenda / Rundown (optional)</span>
+          <span className="font-bold text-[#173d35]">Agenda / Rundown (optional)</span>
         </Label>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAgendaDragEnd}>
           <SortableContext items={form.agenda.map((i) => i._key)} strategy={verticalListSortingStrategy}>
@@ -335,9 +331,25 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
           className="flex items-center gap-1.5 text-sm text-[#173d35]/60 hover:text-[#173d35] transition-colors"
         >
           <Plus className="size-3.5" />
-          <span>Tambah Item / Add Item</span>
+          <span>Add Item</span>
         </button>
       </div>
+
+      {/* Activate immediately — only show for new sessions */}
+      {!initialData?.id && (
+        <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-[#10B981]/30 bg-[#10B981]/5 px-3 py-2.5">
+          <input
+            type="checkbox"
+            checked={form.activate_immediately}
+            onChange={(e) => setForm((p) => ({ ...p, activate_immediately: e.target.checked }))}
+            className="rounded"
+          />
+          <div>
+            <span className="text-sm font-bold text-[#173d35]">Activate immediately</span>
+            <span className="block text-xs text-[#173d35]/60">Session will appear on the home page and scanner</span>
+          </div>
+        </label>
+      )}
 
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
@@ -352,7 +364,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
           className="flex-1 bg-[#173d35] hover:bg-[#173d35]/90 text-white"
         >
           {loading ? <LoadingSpinner size="sm" className="text-white" /> : (
-            initialData?.id ? "Kemaskini / Update" : "Simpan / Save"
+            initialData?.id ? "Update" : "Save"
           )}
         </Button>
         <Button
@@ -361,7 +373,7 @@ export function SessionForm({ initialData, onSuccess, onCancel }: SessionFormPro
           onClick={onCancel}
           className="flex-1"
         >
-          Batal / Cancel
+          Cancel
         </Button>
       </div>
     </form>
