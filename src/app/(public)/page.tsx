@@ -23,7 +23,7 @@ interface ActiveSession {
   session_programmes: SessionProgramme[];
 }
 
-async function getActiveSession(): Promise<ActiveSession | null> {
+async function getActiveSessions(): Promise<ActiveSession[]> {
   try {
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ??
@@ -33,16 +33,16 @@ async function getActiveSession(): Promise<ActiveSession | null> {
       cache: "no-store",
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const json = await res.json();
-    return json.session ?? null;
+    return (json.sessions ?? (json.session ? [json.session] : [])) as ActiveSession[];
   } catch {
-    return null;
+    return [];
   }
 }
 
 export default async function LandingPage() {
-  const session = await getActiveSession();
+  const sessions = await getActiveSessions();
 
   return (
     <div className="flex flex-col min-h-screen font-sans">
@@ -63,47 +63,50 @@ export default async function LandingPage() {
           </p>
         </div>
 
-        {/* Session Status Card */}
-        <div className="w-full max-w-md mb-10">
-          {session ? (
-            <div
-              className="rounded-[1.5rem] shadow-[0_20px_40px_rgba(11,28,48,0.06)] bg-white/80 backdrop-blur-sm p-6"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(23,61,53,0.08) 0%, rgba(115,91,41,0.06) 100%)",
-              }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10B981]/10 text-[#10B981] text-sm font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-[#10B981] inline-block" />
-                  Sesi Aktif / Active Session
-                </span>
-              </div>
-              <p className="text-lg font-bold text-[#173d35] mb-1">
-                {session.title ?? "Sesi Hari Ini / Today's Session"}
-              </p>
-              <p className="text-sm text-[#173d35]/70 mb-4">
-                {formatDateSGT(session.session_date)}
-              </p>
-              {session.session_programmes.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {session.session_programmes.map((sp) =>
-                    sp.programmes ? (
-                      <span
-                        key={sp.programme_id}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white"
-                        style={{ backgroundColor: sp.programmes.colour }}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full bg-white/70 inline-block"
-                        />
-                        {sp.programmes.name}
-                      </span>
-                    ) : null
-                  )}
+        {/* Session Status Cards */}
+        <div className="w-full max-w-md mb-10 space-y-3">
+          {sessions.length > 0 ? (
+            sessions.map((session) => (
+              <div
+                key={session.id}
+                className="rounded-[1.5rem] shadow-[0_20px_40px_rgba(11,28,48,0.06)] bg-white/80 backdrop-blur-sm p-6"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(23,61,53,0.08) 0%, rgba(115,91,41,0.06) 100%)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10B981]/10 text-[#10B981] text-sm font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-[#10B981] inline-block" />
+                    Sesi Aktif / Active Session
+                  </span>
                 </div>
-              )}
-            </div>
+                <p className="text-lg font-bold text-[#173d35] mb-1">
+                  {session.title ?? "Sesi Hari Ini / Today's Session"}
+                </p>
+                <p className="text-sm text-[#173d35]/70 mb-4">
+                  {formatDateSGT(session.session_date)}
+                </p>
+                {session.session_programmes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {session.session_programmes.map((sp) =>
+                      sp.programmes ? (
+                        <span
+                          key={sp.programme_id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white"
+                          style={{ backgroundColor: sp.programmes.colour }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full bg-white/70 inline-block"
+                          />
+                          {sp.programmes.name}
+                        </span>
+                      ) : null
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
           ) : (
             <div className="rounded-[1.5rem] bg-[#f0f4f3] p-5">
               <p className="text-[#173d35]/50 font-semibold text-base">
