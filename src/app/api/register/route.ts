@@ -13,16 +13,6 @@ export async function POST(req: NextRequest) {
 
   const data = parsed.data;
 
-  // Check duplicate email
-  const { data: existing } = await serviceClient
-    .from("participants")
-    .select("id")
-    .eq("email", data.email)
-    .single();
-  if (existing) {
-    return NextResponse.json({ error: "EMAIL_EXISTS" }, { status: 409 });
-  }
-
   const qr_token = generateQrToken();
 
   const { data: participant, error } = await serviceClient
