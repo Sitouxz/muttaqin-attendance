@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { formatDateSGT } from "@/lib/utils/format";
 
 interface Programme {
@@ -48,9 +49,17 @@ export default async function LandingPage() {
     <div className="flex flex-col min-h-screen font-sans">
       {/* Hero */}
       <section className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
-        <div className="mb-8">
+        <div className="mb-8 flex flex-col items-center">
+          <Image
+            src="/logo.png"
+            alt="Santunan Emas logo"
+            width={1920}
+            height={1080}
+            priority
+            className="mb-5 h-[86px] w-[280px] object-cover sm:h-[104px] sm:w-[340px] md:h-[116px] md:w-[380px]"
+          />
           <h1
-            className="text-5xl font-bold tracking-tight text-[#173d35] mb-3"
+            className="sr-only"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             Santunan Emas
