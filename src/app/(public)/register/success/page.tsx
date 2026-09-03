@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 
 interface SuccessPageProps {
-  searchParams: Promise<{ name?: string }>;
+  searchParams: Promise<{ name?: string; channel?: string }>;
 }
 
 export default async function RegisterSuccessPage({ searchParams }: SuccessPageProps) {
@@ -10,6 +10,7 @@ export default async function RegisterSuccessPage({ searchParams }: SuccessPageP
   const name = params.name
     ? (() => { try { return decodeURIComponent(params.name!); } catch { return params.name!; } })()
     : null;
+  const isWhatsApp = params.channel === "whatsapp";
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
@@ -39,10 +40,12 @@ export default async function RegisterSuccessPage({ searchParams }: SuccessPageP
           {/* Message */}
           <div>
             <p className="text-[#173d35] font-semibold">
-              Sila semak e-mel anda
+              {isWhatsApp ? "Sila semak WhatsApp anda" : "Sila semak e-mel anda"}
             </p>
             <p className="text-[#173d35]/60 text-sm mt-0.5">
-              Please check your email for your QR code
+              {isWhatsApp
+                ? "Please check your WhatsApp for your QR code"
+                : "Please check your email for your QR code"}
             </p>
           </div>
 

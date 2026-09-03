@@ -55,12 +55,14 @@ export async function POST(request: NextRequest) {
     .from("participants")
     .select("full_name, email, qr_image_url")
     .eq("is_active", true)
-    .eq("email_consent", true);
+    .eq("email_consent", true)
+    .not("email", "is", null);
 
   const errors: string[] = [];
   let sent = 0;
 
   for (const participant of participants ?? []) {
+    if (!participant.email) continue;
     try {
       await sendReminderEmail({
         participant: {

@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { RegisterSchema, type RegisterInput, PARTICIPANT_CATEGORIES } from "@/lib/validations/participant";
+import { RegisterSchema, type RegisterInput } from "@/lib/validations/participant";
 import { BilingualLabel } from "@/components/shared/BilingualLabel";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { cn } from "@/lib/utils/cn";
@@ -14,6 +14,9 @@ const inputClass =
 
 const errorClass = "text-red-600 text-sm mt-1";
 
+// WhatsApp delivery goes live once SE's approved Twilio template is wired in.
+const WHATSAPP_ENABLED = process.env.NEXT_PUBLIC_WHATSAPP_ENABLED === "true";
+
 export function RegistrationForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -22,13 +25,18 @@ export function RegistrationForm() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
     defaultValues: {
+      reg_channel: "email",
       participant_category: undefined,
     },
   });
+
+  const channel = watch("reg_channel");
 
   async function onSubmit(data: RegisterInput) {
     setServerError(null);
@@ -46,7 +54,12 @@ export function RegistrationForm() {
       }
 
       if (res.status === 201) {
-        router.push("/register/success?name=" + encodeURIComponent(data.full_name));
+        router.push(
+          "/register/success?name=" +
+            encodeURIComponent(data.full_name) +
+            "&channel=" +
+            data.reg_channel,
+        );
         return;
       }
 
@@ -61,6 +74,43 @@ export function RegistrationForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+      {/* Delivery channel */}
+      <input type="hidden" {...register("reg_channel")} />
+      {WHATSAPP_ENABLED && (
+      <div className="flex flex-col gap-1.5">
+        <label>
+          <BilingualLabel my="Terima Kod QR Melalui" en="Receive QR Code Via" />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { value: "email", my: "Emel", en: "Email" },
+            { value: "whatsapp", my: "WhatsApp", en: "WhatsApp" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() =>
+                setValue("reg_channel", opt.value as RegisterInput["reg_channel"], {
+                  shouldValidate: true,
+                })
+              }
+              className={cn(
+                "min-h-[56px] rounded-[0.75rem] px-4 font-semibold transition",
+                channel === opt.value
+                  ? "bg-[#173d35] text-white"
+                  : "bg-[#f0f4f3] text-[#173d35]",
+              )}
+            >
+              <span className="flex flex-col items-center leading-tight">
+                <span>{opt.my}</span>
+                <span className="text-xs font-normal opacity-70">{opt.en}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+      )}
+
       {/* Full Name */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="full_name">
@@ -78,22 +128,24 @@ export function RegistrationForm() {
         )}
       </div>
 
-      {/* Email */}
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="email">
-          <BilingualLabel my="Emel" en="Email" />
-        </label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          className={cn(inputClass, errors.email && "ring-2 ring-red-400")}
-          {...register("email")}
-        />
-        {errors.email && (
-          <p className={errorClass}>{errors.email.message}</p>
-        )}
-      </div>
+      {/* Email — only when registering by email */}
+      {channel === "email" && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="email">
+            <BilingualLabel my="Emel" en="Email" />
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className={cn(inputClass, errors.email && "ring-2 ring-red-400")}
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className={errorClass}>{errors.email.message}</p>
+          )}
+        </div>
+      )}
 
       {/* Phone */}
       <div className="flex flex-col gap-1.5">

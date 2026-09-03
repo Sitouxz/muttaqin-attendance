@@ -6,7 +6,8 @@ import {
 interface QrEmailProps {
   participant: {
     full_name: string;
-    email: string;
+    serial_code: string;
+    qr_card_url: string;
     qr_image_url: string;
     qr_token: string;
   };
@@ -28,21 +29,28 @@ export function QrEmail({ participant }: QrEmailProps) {
           <Text style={{ color: "#555", fontSize: 16 }}>
             Welcome, {participant.full_name}! Your registration for Santunan Emas is complete.
           </Text>
-          <Section style={{ textAlign: "center", margin: "24px 0" }}>
-            <Text style={{ color: "#173d35", fontWeight: "bold", marginBottom: 8 }}>
-              Kod QR Anda / Your QR Code
+
+          <Section style={{ textAlign: "center", margin: "16px 0 8px" }}>
+            <Text style={{ color: "#173d35", fontWeight: "bold", marginBottom: 4 }}>
+              Kod Pendaftaran / Registration Code
             </Text>
+            <Text style={{ color: "#173d35", fontSize: 28, fontWeight: "bold", letterSpacing: 3, margin: 0 }}>
+              {participant.serial_code}
+            </Text>
+          </Section>
+
+          <Section style={{ textAlign: "center", margin: "16px 0" }}>
             <Img
-              src={participant.qr_image_url}
-              alt="QR Code"
-              width={200}
-              height={200}
-              style={{ display: "block", margin: "0 auto", borderRadius: 8 }}
+              src={participant.qr_card_url}
+              alt="Kod QR Santunan Emas"
+              width={320}
+              style={{ display: "block", margin: "0 auto", borderRadius: 8, maxWidth: "100%" }}
             />
           </Section>
+
           <Section style={{ textAlign: "center" }}>
             <Link
-              href={participant.qr_image_url}
+              href={participant.qr_card_url}
               style={{
                 backgroundColor: "#173d35",
                 color: "#ffffff",
@@ -52,11 +60,12 @@ export function QrEmail({ participant }: QrEmailProps) {
                 fontWeight: "bold",
               }}
             >
-              Muat Turun QR / Download QR
+              Muat Turun Kod QR / Download QR Card
             </Link>
           </Section>
+
           <Text style={{ color: "#555", fontSize: 14, marginTop: 24 }}>
-            Simpan kod QR ini untuk digunakan semasa sesi. Please keep this QR code for use during sessions.
+            Tunjukkan kod QR ini semasa pendaftaran setiap minggu. Show this QR code at registration each week.
           </Text>
           <Text style={{ color: "#999", fontSize: 12, marginTop: 16 }}>
             Untuk bantuan, hubungi kami di info@santunanemas.sg
