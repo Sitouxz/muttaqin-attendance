@@ -35,7 +35,6 @@ describe("RegistrationForm", () => {
     expect(document.getElementById("phone")).toBeInTheDocument();
     expect(document.getElementById("age")).toBeInTheDocument();
     expect(document.getElementById("postal_code")).toBeInTheDocument();
-    expect(document.getElementById("email_consent")).toBeInTheDocument();
   });
 
   it("shows validation error for invalid phone number on submit", async () => {
@@ -57,31 +56,33 @@ describe("RegistrationForm", () => {
     });
   });
 
-  it("shows bilingual error message when API returns 409 (email exists)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 409,
-        ok: false,
-        json: async () => ({ error: "EMAIL_EXISTS" }),
-      })
-    );
+  it("submits to /api/register with the email channel by default", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      status: 201,
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<RegistrationForm />);
 
     fillField("full_name", "Ahmad Bin Ali");
     fillField("email", "ahmad@test.com");
     fillField("phone", "91234567");
-    // age is a number field - use valueAsNumber simulation
-    const ageEl = document.getElementById("age") as HTMLInputElement;
-    fireEvent.change(ageEl, { target: { value: "30", valueAsNumber: 30 } });
+    fireEvent.change(document.getElementById("age") as HTMLInputElement, {
+      target: { value: "30" },
+    });
     fillField("postal_code", "123456");
+    fireEvent.click(document.querySelector('input[value="male"]') as HTMLInputElement);
+    fireEvent.click(document.querySelector('input[value="warga_emas"]') as HTMLInputElement);
 
     await submitForm();
 
     await waitFor(() => {
-      expect(screen.getByText(/e-mel sudah didaftarkan/i)).toBeInTheDocument();
-      expect(screen.getByText(/email already registered/i)).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledWith("/api/register", expect.any(Object));
     });
+    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sentBody.reg_channel).toBe("email");
+    expect(sentBody.email).toBe("ahmad@test.com");
   });
 });

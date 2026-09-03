@@ -4,15 +4,33 @@ import { RegisterSchema } from "@/lib/validations/participant";
 describe("RegisterSchema", () => {
   const valid = {
     full_name: "Ali bin Ahmad",
+    reg_channel: "email",
     email: "ali@example.com",
     phone: "91234567",
     age: 55,
+    gender: "male",
     postal_code: "123456",
-    email_consent: true,
+    participant_category: "warga_emas",
   };
 
   it("accepts a valid registration", () => {
     expect(RegisterSchema.safeParse(valid).success).toBe(true);
+  });
+
+  const withoutEmail = () => {
+    const copy: Record<string, unknown> = { ...valid };
+    delete copy.email;
+    return copy;
+  };
+
+  it("accepts a WhatsApp registration with no email", () => {
+    expect(
+      RegisterSchema.safeParse({ ...withoutEmail(), reg_channel: "whatsapp" }).success,
+    ).toBe(true);
+  });
+
+  it("rejects an email registration with no email", () => {
+    expect(RegisterSchema.safeParse(withoutEmail()).success).toBe(false);
   });
 
   it("rejects age below 1", () => {
