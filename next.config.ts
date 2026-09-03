@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ hostname: "*.supabase.co" }],
   },
+  // The branded QR-card renderer (src/lib/utils/qr-card.tsx) reads the bundled
+  // font and logo from disk at request time; make sure they ship with the
+  // serverless functions that call it.
+  outputFileTracingIncludes: {
+    "/api/**": ["./src/assets/fonts/**", "./public/logo.png"],
+  },
   redirects: async () => {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) return [];

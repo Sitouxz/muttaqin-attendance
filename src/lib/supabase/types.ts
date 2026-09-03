@@ -140,7 +140,7 @@ export type Database = {
         Row: {
           age: number
           created_at: string
-          email: string
+          email: string | null
           email_consent: boolean
           full_name: string
           gender: string
@@ -149,14 +149,17 @@ export type Database = {
           participant_category: string
           phone: string
           postal_code: string
+          qr_card_url: string | null
           qr_image_url: string | null
           qr_token: string
+          reg_channel: string
+          serial_code: string
           updated_at: string
         }
         Insert: {
           age: number
           created_at?: string
-          email: string
+          email?: string | null
           email_consent?: boolean
           full_name: string
           gender?: string
@@ -165,14 +168,17 @@ export type Database = {
           participant_category?: string
           phone: string
           postal_code: string
+          qr_card_url?: string | null
           qr_image_url?: string | null
           qr_token?: string
+          reg_channel?: string
+          serial_code?: string
           updated_at?: string
         }
         Update: {
           age?: number
           created_at?: string
-          email?: string
+          email?: string | null
           email_consent?: boolean
           full_name?: string
           gender?: string
@@ -181,8 +187,11 @@ export type Database = {
           participant_category?: string
           phone?: string
           postal_code?: string
+          qr_card_url?: string | null
           qr_image_url?: string | null
           qr_token?: string
+          reg_channel?: string
+          serial_code?: string
           updated_at?: string
         }
         Relationships: []
