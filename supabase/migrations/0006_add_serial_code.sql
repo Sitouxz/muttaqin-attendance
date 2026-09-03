@@ -11,6 +11,7 @@ ALTER TABLE public.participants
 CREATE OR REPLACE FUNCTION public.assign_participant_serial()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = ''
 AS $$
 BEGIN
   IF NEW.serial_code IS NULL THEN
