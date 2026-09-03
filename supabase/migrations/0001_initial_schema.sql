@@ -1,6 +1,6 @@
 -- Santunan Emas QR Attendance App — Initial Schema
 -- Applied: 2026-03-25
--- Project: hqiwdihnihdfjgbjpbqr (Muttaqin Attendance, ap-south-1)
+-- Project: pbeizncjbyyppwtecrau (Muttaqin Attendance, ap-southeast-1)
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
