@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       `
       checked_in_at,
       check_in_method,
-      participants(full_name, email),
+      participants(serial_code, full_name, email),
       programmes(name),
       sessions(session_date)
       `
@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
     const programme = !Array.isArray(row.programmes) ? row.programmes : null;
     const session = !Array.isArray(row.sessions) ? row.sessions : null;
     return {
+      Code: participant?.serial_code ?? "",
       "Participant Name": participant?.full_name ?? "",
       Email: participant?.email ?? "",
       Programme: programme?.name ?? "",

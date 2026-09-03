@@ -11,15 +11,18 @@ import { CHECK_IN_METHOD_LABELS, type CheckInMethod } from "@/lib/utils/constant
 
 interface Participant {
   id: string;
+  serial_code: string;
   full_name: string;
-  email: string;
+  email: string | null;
   phone: string;
   age: number;
   postal_code: string;
+  reg_channel: "email" | "whatsapp";
   is_active: boolean;
   email_consent: boolean;
   created_at: string;
   qr_image_url: string | null;
+  qr_card_url: string | null;
   qr_token: string;
 }
 
@@ -55,7 +58,7 @@ export default function ParticipantDetailPage() {
   }, [fetchData]);
 
   async function handleResendQr() {
-    if (!confirm("Regenerate and send new QR?")) return;
+    if (!confirm("Resend the QR card to this participant?")) return;
     setResending(true);
     setResendMsg(null);
     const res = await fetch(`/api/admin/participants/${id}/resend-qr`, { method: "POST" });
@@ -97,6 +100,9 @@ export default function ParticipantDetailPage() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-xl font-bold text-[#173d35]">{participant.full_name}</h1>
+              <p className="font-mono text-sm tracking-wider text-[#173d35]/80 mt-0.5">
+                {participant.serial_code}
+              </p>
               <p className="text-sm text-[#173d35]/60 mt-1">
                 {participant.is_active ? (
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700" title="Active">
@@ -113,11 +119,11 @@ export default function ParticipantDetailPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { my: "E-mel", en: "Email", value: participant.email },
-              { my: "Telefon", en: "Phone", value: participant.phone },
+              { my: "Saluran", en: "Channel", value: participant.reg_channel === "whatsapp" ? "WhatsApp" : "Email" },
+              { my: "E-mel", en: "Email", value: participant.email ?? "—" },
+              { my: "Telefon", en: "Phone", value: `+65${participant.phone}` },
               { my: "Umur", en: "Age", value: String(participant.age) },
               { my: "Poskod", en: "Postal Code", value: participant.postal_code },
-              { my: "Persetujuan E-mel", en: "Email Consent", value: participant.email_consent ? "Yes" : "No" },
               { my: "Tarikh Daftar", en: "Registered", value: formatDateSGT(participant.created_at) },
             ].map((field) => (
               <div key={field.my} className="bg-[#f0f4f3] rounded-lg p-3">
@@ -128,17 +134,17 @@ export default function ParticipantDetailPage() {
           </div>
         </div>
 
-        {/* QR Code */}
+        {/* QR Card */}
         <div className="bg-white rounded-[1.5rem] shadow-ambient p-6 flex flex-col items-center gap-4">
           <div>
-            <p className="font-bold text-[#173d35] text-center">QR Code</p>
+            <p className="font-bold text-[#173d35] text-center">QR Card</p>
           </div>
 
-          {participant.qr_image_url ? (
+          {participant.qr_card_url || participant.qr_image_url ? (
             <img
-              src={participant.qr_image_url}
-              alt="QR Code"
-              className="w-48 h-48 rounded-lg border border-[#f0f4f3]"
+              src={participant.qr_card_url ?? participant.qr_image_url ?? ""}
+              alt="QR Card"
+              className="w-56 rounded-lg border border-[#f0f4f3]"
             />
           ) : (
             <div className="w-48 h-48 rounded-lg border-2 border-dashed border-[#173d35]/20 flex items-center justify-center">
@@ -146,10 +152,10 @@ export default function ParticipantDetailPage() {
             </div>
           )}
 
-          {participant.qr_image_url && (
+          {(participant.qr_card_url || participant.qr_image_url) && (
             <a
-              href={participant.qr_image_url}
-              download={`qr_${participant.full_name.replace(/\s+/g, "_")}.png`}
+              href={participant.qr_card_url ?? participant.qr_image_url ?? "#"}
+              download={`${participant.serial_code}_${participant.full_name.replace(/\s+/g, "_")}.png`}
               className="inline-flex items-center gap-2 text-sm text-[#173d35] hover:underline"
             >
               <Download className="size-4" />

@@ -25,12 +25,14 @@ import { ParticipantForm } from "@/components/admin/ParticipantForm";
 
 interface ParticipantRow {
   id: string;
+  serial_code: string;
   full_name: string;
-  email: string;
+  email: string | null;
   phone: string;
   age: number;
   gender: "male" | "female" | "unspecified";
   postal_code: string;
+  reg_channel: "email" | "whatsapp";
   is_active: boolean;
   created_at: string;
 }
@@ -159,6 +161,17 @@ export default function ParticipantsPage() {
       enableHiding: false,
     },
     {
+      accessorKey: "serial_code",
+      header: () => (
+        <div>
+          <div className="font-bold text-[#173d35]">Code</div>
+        </div>
+      ),
+      cell: ({ row }) => (
+        <span className="font-mono text-sm tracking-wide">{row.original.serial_code}</span>
+      ),
+    },
+    {
       accessorKey: "full_name",
       header: () => (
         <div>
@@ -171,10 +184,16 @@ export default function ParticipantsPage() {
       accessorKey: "email",
       header: () => (
         <div>
-          <div className="font-bold text-[#173d35]">Email</div>
+          <div className="font-bold text-[#173d35]">Contact</div>
         </div>
       ),
-      cell: ({ row }) => <span className="text-sm">{row.original.email}</span>,
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {row.original.reg_channel === "whatsapp" || !row.original.email
+            ? `WhatsApp · +65${row.original.phone}`
+            : row.original.email}
+        </span>
+      ),
     },
     {
       accessorKey: "phone",
@@ -304,7 +323,7 @@ export default function ParticipantsPage() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, email, phone..."
+          placeholder="Search code, name, email, phone..."
           className="pl-9 min-h-[44px]"
         />
       </div>
@@ -441,8 +460,8 @@ export default function ParticipantsPage() {
             </DialogDescription>
           </DialogHeader>
           {editingParticipant && (
-            <ParticipantForm 
-              initialData={editingParticipant}
+            <ParticipantForm
+              initialData={{ ...editingParticipant, email: editingParticipant.email ?? "" }}
               onSuccess={() => {
                 setEditingParticipant(null);
                 fetchParticipants();

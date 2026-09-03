@@ -14,15 +14,17 @@ export async function GET(_request: NextRequest) {
 
   const { data: participants, error } = await serviceClient
     .from("participants")
-    .select("full_name, email, phone, age, postal_code, created_at, is_active")
+    .select("serial_code, full_name, email, phone, age, postal_code, reg_channel, created_at, is_active")
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const rows = (participants ?? []).map((p) => ({
+    Code: p.serial_code,
     "Full Name": p.full_name,
-    Email: p.email,
+    Email: p.email ?? "",
     Phone: p.phone,
+    Channel: p.reg_channel,
     Age: p.age,
     "Postal Code": p.postal_code,
     "Registered Date": formatDateSGT(p.created_at),

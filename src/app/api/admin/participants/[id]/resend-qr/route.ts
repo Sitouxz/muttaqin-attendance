@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
-import { generateQrToken, generateQrPng } from "@/lib/utils/qr";
-import { sendReminderEmail } from "@/lib/email/send-reminder";
+import { uploadQrAssets } from "@/lib/qr/assets";
+import { sendQrEmail } from "@/lib/email/send-qr";
+import { sendQrWhatsApp } from "@/lib/whatsapp/send-qr";
 
+/**
+ * Re-delivers a participant's permanent QR. The token is unchanged (the QR is
+ * meant to be permanent); the images are regenerated so any name/serial change
+ * is picked up, then sent over the participant's registration channel.
+ */
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const supabase = await createClient();
@@ -15,7 +21,6 @@ export async function POST(
   } = await supabase.auth.getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Fetch participant
   const { data: participant, error: fetchError } = await serviceClient
     .from("participants")
     .select("*")
@@ -26,62 +31,53 @@ export async function POST(
     return NextResponse.json({ error: "Participant not found" }, { status: 404 });
   }
 
-  // Generate new QR token
-  const newToken = generateQrToken();
+  let urls;
+  try {
+    urls = await uploadQrAssets(participant);
+    await serviceClient
+      .from("participants")
+      .update({ qr_image_url: urls.qr_image_url, qr_card_url: urls.qr_card_url })
+      .eq("id", id);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "QR generation failed" },
+      { status: 500 },
+    );
+  }
 
-  // Generate QR PNG
-  const qrBuffer = await generateQrPng(newToken);
-
-  // Upload to Supabase storage
-  const fileName = `${newToken}.png`;
-  const { error: uploadError } = await serviceClient.storage
-    .from("qr-codes")
-    .upload(fileName, qrBuffer, {
-      contentType: "image/png",
-      upsert: true,
+  if (participant.reg_channel === "whatsapp") {
+    const result = await sendQrWhatsApp({
+      full_name: participant.full_name,
+      phone: participant.phone,
+      serial_code: participant.serial_code,
+      qr_card_url: urls.qr_card_url,
     });
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
-  }
-
-  const {
-    data: { publicUrl },
-  } = serviceClient.storage.from("qr-codes").getPublicUrl(fileName);
-
-  // Update participant
-  const { error: updateError } = await serviceClient
-    .from("participants")
-    .update({ qr_token: newToken, qr_image_url: publicUrl })
-    .eq("id", id);
-
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
-  }
-
-  // Find the next upcoming session to include in email (best-effort)
-  const { data: nextSession } = await serviceClient
-    .from("sessions")
-    .select("session_date, title, start_time, end_time")
-    .in("status", ["active", "draft"])
-    .gte("session_date", new Date().toISOString().slice(0, 10))
-    .order("session_date", { ascending: true })
-    .limit(1)
-    .single();
-
-  // Send QR email
-  if (nextSession) {
-    await sendReminderEmail({
-      participant: {
-        full_name: participant.full_name,
-        email: participant.email,
-        qr_image_url: publicUrl,
-      },
-      session: nextSession,
-    }).catch(() => {
-      // non-fatal
+    if (!result.delivered) {
+      return NextResponse.json(
+        { error: result.reason === "not_configured" ? "WhatsApp not configured" : result.error },
+        { status: 502 },
+      );
+    }
+  } else {
+    if (!participant.email) {
+      return NextResponse.json({ error: "Participant has no email" }, { status: 422 });
+    }
+    await sendQrEmail({
+      full_name: participant.full_name,
+      email: participant.email,
+      serial_code: participant.serial_code,
+      qr_card_url: urls.qr_card_url,
+      qr_image_url: urls.qr_image_url,
+      qr_token: participant.qr_token,
+    }).catch((err) => {
+      console.error("[resend-qr] email failed:", err);
     });
   }
 
-  return NextResponse.json({ success: true, qr_image_url: publicUrl });
+  return NextResponse.json({
+    success: true,
+    channel: participant.reg_channel,
+    qr_image_url: urls.qr_image_url,
+    qr_card_url: urls.qr_card_url,
+  });
 }

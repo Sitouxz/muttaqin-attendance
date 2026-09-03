@@ -18,15 +18,16 @@ export async function GET(request: NextRequest) {
 
   let query = serviceClient
     .from("participants")
-    .select("id, full_name, email, phone, age, postal_code, is_active, created_at, qr_image_url", {
-      count: "exact",
-    })
+    .select(
+      "id, full_name, email, phone, age, postal_code, is_active, created_at, qr_image_url, qr_card_url, serial_code, reg_channel",
+      { count: "exact" },
+    )
     .order("created_at", { ascending: false })
     .range(from, to);
 
   if (q) {
     query = query.or(
-      `full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`
+      `full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%,serial_code.ilike.%${q}%`
     );
   }
 
