@@ -37,7 +37,9 @@ export function getTwilioClient(): Twilio {
 
 /** Normalise an SG mobile (stored as 8 digits) or raw input to `whatsapp:+E.164`. */
 export function toWhatsAppAddress(phone: string): string {
-  const digits = phone.replace(/[^\d]/g, "");
+  const trimmed = phone.trim();
+  if (trimmed.startsWith("+")) return `whatsapp:${trimmed.replace(/[^\d+]/g, "")}`;
+  const digits = trimmed.replace(/\D/g, "");
   const e164 = digits.startsWith("65") ? `+${digits}` : `+65${digits}`;
   return `whatsapp:${e164}`;
 }
