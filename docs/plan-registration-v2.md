@@ -21,7 +21,8 @@
 
 ## 2. Current system (as built)
 
-- Next.js 16 (webpack) + Supabase (project `hqiwdihnihdfjgbjpbqr`, ap-south-1) + Resend + Vercel.
+- Next.js 16 (webpack) + Supabase (production project `bquhcqvjpadrfeurfmfl`) + Resend + Vercel (`santunan-emas`, domain `attendance.santunanemas.sg`).
+  - Note: `0001_initial_schema.sql` has a stale `hqiwdihnihdfjgbjpbqr` comment; `.env.local` points at `pbeizncjbyyppwtecrau` — both need reconciling with prod.
 - `participants`: `qr_token` (UUID, the QR payload), `qr_image_url` (plain PNG in `qr-codes` bucket), `email` (was UNIQUE — dropped in migration 0005), `phone` (SG mobile, always required).
 - Register flow: `POST /api/register` → insert → `generateQrPng(qr_token)` → upload `<token>.png` → `sendQrEmail`.
 - Retrieve QR: email-only OTP (`otp_requests`), 10-min TTL.
@@ -122,6 +123,7 @@ Rationale: decorated QRs scan less reliably; keep the machine-read image clean a
 2. Confirm the **SE notification numbers/inbox**: `SE_NOTIFY_EMAIL` (default `info@santunanemas.sg`), `SE_WHATSAPP_NOTIFY_NUMBER`.
 3. Twilio credentials into Vercel env for this project (currently only in the chatbot project).
 4. Existing participants: keep their UUID QR; they get a `serial_code` on backfill but **no re-send** unless requested.
+5. Apply migrations `0006`/`0007` to the **production** Supabase project (`bquhcqvjpadrfeurfmfl` per Executor) via CI `supabase db push` or Owen — it is not on the connected Supabase MCP. Reconcile the stale `hqiwdihnihdfjgbjpbqr` comment in `0001` and the `pbeizncjbyyppwtecrau` ref in `.env.local`.
 
 ## 7. Verification
 
