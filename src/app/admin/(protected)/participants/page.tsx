@@ -33,6 +33,7 @@ interface ParticipantRow {
   gender: "male" | "female" | "unspecified";
   postal_code: string;
   reg_channel: "email" | "whatsapp";
+  wa_qr_pending: boolean;
   is_active: boolean;
   created_at: string;
 }
@@ -189,9 +190,18 @@ export default function ParticipantsPage() {
       ),
       cell: ({ row }) => (
         <span className="text-sm">
-          {row.original.reg_channel === "whatsapp" || !row.original.email
-            ? `WhatsApp · +65${row.original.phone}`
-            : row.original.email}
+          {row.original.reg_channel === "whatsapp" || !row.original.email ? (
+            <>
+              {`WhatsApp · +65${row.original.phone}`}
+              {row.original.wa_qr_pending && (
+                <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                  QR pending
+                </span>
+              )}
+            </>
+          ) : (
+            row.original.email
+          )}
         </span>
       ),
     },

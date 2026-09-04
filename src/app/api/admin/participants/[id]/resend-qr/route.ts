@@ -53,11 +53,23 @@ export async function POST(
       qr_card_url: urls.qr_card_url,
     });
     if (!result.delivered) {
-      return NextResponse.json(
-        { error: result.reason === "not_configured" ? "WhatsApp not configured" : result.error },
-        { status: 502 },
-      );
+      if (result.reason === "not_configured") {
+        // Fall back to inbound-first: re-arm so the card goes out when the
+        // participant next messages the SE WhatsApp number.
+        await serviceClient
+          .from("participants")
+          .update({ wa_qr_pending: true })
+          .eq("id", id);
+        return NextResponse.json({
+          success: true,
+          channel: "whatsapp",
+          status: "awaiting_whatsapp",
+          qr_card_url: urls.qr_card_url,
+        });
+      }
+      return NextResponse.json({ error: result.error }, { status: 502 });
     }
+    await serviceClient.from("participants").update({ wa_qr_pending: false }).eq("id", id);
   } else {
     if (!participant.email) {
       return NextResponse.json({ error: "Participant has no email" }, { status: 422 });

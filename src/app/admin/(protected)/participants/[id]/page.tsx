@@ -18,6 +18,7 @@ interface Participant {
   age: number;
   postal_code: string;
   reg_channel: "email" | "whatsapp";
+  wa_qr_pending: boolean;
   is_active: boolean;
   email_consent: boolean;
   created_at: string;
@@ -139,6 +140,13 @@ export default function ParticipantDetailPage() {
           <div>
             <p className="font-bold text-[#173d35] text-center">QR Card</p>
           </div>
+
+          {participant.reg_channel === "whatsapp" && participant.wa_qr_pending && (
+            <p className="text-xs text-center rounded-lg bg-amber-50 text-amber-700 px-3 py-2">
+              Awaiting WhatsApp — the card is sent when this person first messages
+              the SE number.
+            </p>
+          )}
 
           {participant.qr_card_url || participant.qr_image_url ? (
             <img

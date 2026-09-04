@@ -3,6 +3,7 @@ import { serviceClient } from "@/lib/supabase/service";
 import { uploadQrAssets } from "@/lib/qr/assets";
 import { sendQrEmail } from "@/lib/email/send-qr";
 import { sendQrWhatsApp } from "@/lib/whatsapp/send-qr";
+import { isWhatsAppConfigured } from "@/lib/whatsapp/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -25,7 +26,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Generate + upload both QR images, then deliver over the chosen channel.
-  let delivery: "sent" | "pending" | "failed" = "pending";
+  // "awaiting_whatsapp": card is ready but business-initiated WhatsApp is not
+  // available yet — it goes out when the registrant first messages the SE number
+  // (handled by the chatbot webhook via /api/whatsapp/claim-qr).
+  let delivery: "sent" | "awaiting_whatsapp" | "failed" = "failed";
   try {
     const urls = await uploadQrAssets(participant);
 
@@ -35,13 +39,29 @@ export async function POST(req: NextRequest) {
       .eq("id", participant.id);
 
     if (reg_channel === "whatsapp") {
-      const result = await sendQrWhatsApp({
-        full_name: participant.full_name,
-        phone: participant.phone,
-        serial_code: participant.serial_code,
-        qr_card_url: urls.qr_card_url,
-      });
-      delivery = result.delivered ? "sent" : "pending";
+      if (isWhatsAppConfigured()) {
+        const result = await sendQrWhatsApp({
+          full_name: participant.full_name,
+          phone: participant.phone,
+          serial_code: participant.serial_code,
+          qr_card_url: urls.qr_card_url,
+        });
+        if (result.delivered) {
+          delivery = "sent";
+        } else {
+          await serviceClient
+            .from("participants")
+            .update({ wa_qr_pending: true })
+            .eq("id", participant.id);
+          delivery = "awaiting_whatsapp";
+        }
+      } else {
+        await serviceClient
+          .from("participants")
+          .update({ wa_qr_pending: true })
+          .eq("id", participant.id);
+        delivery = "awaiting_whatsapp";
+      }
     } else {
       await sendQrEmail({
         full_name: participant.full_name,

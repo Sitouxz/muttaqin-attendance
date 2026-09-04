@@ -54,12 +54,13 @@ export function RegistrationForm() {
       }
 
       if (res.status === 201) {
-        router.push(
-          "/register/success?name=" +
-            encodeURIComponent(data.full_name) +
-            "&channel=" +
-            data.reg_channel,
-        );
+        const json = await res.json().catch(() => ({}));
+        const params = new URLSearchParams({
+          name: data.full_name,
+          channel: data.reg_channel,
+        });
+        if (json?.serial_code) params.set("code", json.serial_code);
+        router.push("/register/success?" + params.toString());
         return;
       }
 

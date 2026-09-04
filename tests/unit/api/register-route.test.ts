@@ -33,6 +33,7 @@ const mocks = vi.hoisted(() => {
   return {
     participant,
     insert,
+    update,
     from: vi.fn(() => chain),
     uploadQrAssets: vi.fn().mockResolvedValue({
       qr_image_url: "https://example.test/qr.png",
@@ -40,6 +41,7 @@ const mocks = vi.hoisted(() => {
     }),
     sendQrEmail: vi.fn().mockResolvedValue({ id: "email-id" }),
     sendQrWhatsApp: vi.fn().mockResolvedValue({ delivered: true, sid: "SM1" }),
+    isWhatsAppConfigured: vi.fn(() => false),
   };
 });
 
@@ -49,6 +51,7 @@ vi.mock("@/lib/supabase/service", () => ({
 vi.mock("@/lib/qr/assets", () => ({ uploadQrAssets: mocks.uploadQrAssets }));
 vi.mock("@/lib/email/send-qr", () => ({ sendQrEmail: mocks.sendQrEmail }));
 vi.mock("@/lib/whatsapp/send-qr", () => ({ sendQrWhatsApp: mocks.sendQrWhatsApp }));
+vi.mock("@/lib/whatsapp/client", () => ({ isWhatsAppConfigured: mocks.isWhatsAppConfigured }));
 
 const baseRegistration = {
   full_name: "Nur Registrant",
@@ -101,18 +104,35 @@ describe("POST /api/register", () => {
     expect(res.status).toBe(400);
   });
 
-  it("registers via WhatsApp: no email required, delivers over WhatsApp", async () => {
+  it("WhatsApp, no template configured: marks pending for inbound-first delivery", async () => {
     mocks.participant.reg_channel = "whatsapp";
     mocks.participant.email = null as unknown as string;
+    mocks.isWhatsAppConfigured.mockReturnValue(false);
     const { POST } = await import("@/app/api/register/route");
 
     const res = await POST(postRequest({ ...baseRegistration, reg_channel: "whatsapp" }));
 
     expect(res.status).toBe(201);
+    await expect(res.json()).resolves.toMatchObject({ delivery: "awaiting_whatsapp" });
     expect(mocks.insert).toHaveBeenCalledWith(
       expect.objectContaining({ reg_channel: "whatsapp", email: null }),
     );
-    expect(mocks.sendQrWhatsApp).toHaveBeenCalledOnce();
+    expect(mocks.update).toHaveBeenCalledWith({ wa_qr_pending: true });
+    expect(mocks.sendQrWhatsApp).not.toHaveBeenCalled();
     expect(mocks.sendQrEmail).not.toHaveBeenCalled();
+  });
+
+  it("WhatsApp, template configured: sends over WhatsApp", async () => {
+    mocks.participant.reg_channel = "whatsapp";
+    mocks.participant.email = null as unknown as string;
+    mocks.isWhatsAppConfigured.mockReturnValue(true);
+    mocks.sendQrWhatsApp.mockResolvedValue({ delivered: true, sid: "SM1" });
+    const { POST } = await import("@/app/api/register/route");
+
+    const res = await POST(postRequest({ ...baseRegistration, reg_channel: "whatsapp" }));
+
+    expect(res.status).toBe(201);
+    await expect(res.json()).resolves.toMatchObject({ delivery: "sent" });
+    expect(mocks.sendQrWhatsApp).toHaveBeenCalledOnce();
   });
 });

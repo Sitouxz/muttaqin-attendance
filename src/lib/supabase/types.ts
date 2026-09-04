@@ -155,6 +155,7 @@ export type Database = {
           reg_channel: string
           serial_code: string
           updated_at: string
+          wa_qr_pending: boolean
         }
         Insert: {
           age: number
@@ -174,6 +175,7 @@ export type Database = {
           reg_channel?: string
           serial_code?: string
           updated_at?: string
+          wa_qr_pending?: boolean
         }
         Update: {
           age?: number
@@ -193,6 +195,7 @@ export type Database = {
           reg_channel?: string
           serial_code?: string
           updated_at?: string
+          wa_qr_pending?: boolean
         }
         Relationships: []
       }
