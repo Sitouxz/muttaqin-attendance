@@ -6,15 +6,16 @@ import { getTwilioClient, isWhatsAppConfigured, requireEnv, toWhatsAppAddress } 
  * the copy is a second message.
  *
  * A registration QR is a business-initiated message with media, which WhatsApp
- * only allows through an approved template. The template must be built in the
- * Twilio Content Template Builder as an image-header template whose header media
- * and body text are variables:
+ * only allows through a Meta-approved template. Build it with
+ * `scripts/whatsapp-template-setup.mjs` — an image-header UTILITY template:
  *
  *   Header:  Media (image)  -> {{1}}   (the QR card URL)
- *   Body:    "Salam {{2}}, pendaftaran Santunan Emas anda berjaya. Kod anda: {{3}}.
- *             Simpan kod QR ini dan tunjukkan semasa pendaftaran setiap minggu."
+ *   Body:    "Pendaftaran anda telah berjaya. Nombor rujukan anda ialah {{2}}.
+ *             Sila simpan kod QR ini dan tunjukkannya semasa pendaftaran."
  *
  * Set TWILIO_QR_TEMPLATE_SID to its Content SID (HX...) to activate sending.
+ * If SE's approved template uses different variable slots, adjust
+ * `contentVariables` below to match.
  */
 
 export interface WhatsAppQrResult {
@@ -38,9 +39,8 @@ export async function sendQrWhatsApp(participant: {
   const from = requireEnv("TWILIO_WHATSAPP_NUMBER"); // whatsapp:+65...
   const templateSid = requireEnv("TWILIO_QR_TEMPLATE_SID");
   const contentVariables = JSON.stringify({
-    1: participant.qr_card_url,
-    2: participant.full_name,
-    3: participant.serial_code,
+    1: participant.qr_card_url, // media header
+    2: participant.serial_code, // body: nombor rujukan
   });
 
   try {

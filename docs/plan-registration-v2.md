@@ -66,13 +66,36 @@ Rationale: decorated QRs scan less reliably; keep the machine-read image clean a
 - WhatsApp: after the registrant send, a second `messages.create` to `SE_WHATSAPP_NOTIFY_NUMBER` (plain templated text summary + card media). Twilio has no BCC.
 
 ### 3.6 WhatsApp send (Phase 2)
-- New `src/lib/whatsapp/twilio.ts`: `getTwilioClient()`, `sendQrWhatsApp({ to, name, serial, cardUrl })`.
-- Business-initiated + media ⇒ **approved Content template required**. Send via `client.messages.create({ from, to, contentSid: TWILIO_QR_TEMPLATE_SID, contentVariables: JSON.stringify({ 1: name, 2: serial }), mediaUrl: [cardUrl] })` (exact shape confirmed against Twilio Content API docs at build time).
-- Feature-gated: if `TWILIO_QR_TEMPLATE_SID` is unset, `/api/register` with `reg_channel='whatsapp'` returns a "coming soon" error and the form hides the WhatsApp option. So Phase 1 can ship without WhatsApp live.
-- **Template copy to submit** (SE / Owen, in Twilio Console → Content Template Builder, category *Utility*):
-  > Header: Media (image)
-  > Body: `Salam {{1}}, pendaftaran Santunan Emas anda berjaya. Kod anda: *{{2}}*. Simpan kod QR ini dan tunjukkan semasa pendaftaran setiap minggu.`
-  > (EN follow-up optional as second template.)
+- `src/lib/whatsapp/client.ts` + `send-qr.ts` are done; feature-gated on `TWILIO_QR_TEMPLATE_SID`.
+- Business-initiated + media ⇒ **Meta-approved image-header template required**. Send is
+  `client.messages.create({ from, to, contentSid, contentVariables: { 1: cardUrl, 2: serial } })`.
+- `scripts/whatsapp-template-setup.mjs` — creates the template + submits for approval + polls
+  status. Run with `node --env-file="…/Muttaqin Chatbot/.env.local" scripts/whatsapp-template-setup.mjs <cmd>`.
+- `scripts/…` also uploaded a sample card to `qr-codes/cards/_sample.png` (Meta validates the
+  sample media URL at submission).
+
+**Twilio state discovered (2026-09-04):**
+- Account `the shared Twilio account` (shared with the chatbot).
+- WhatsApp sender **`whatsapp:+6589913776`** — ONLINE, quality HIGH, profile "Masjid Al-Muttaqin SG",
+  WABA `2136470433934641`. This is the production sender. (`+14155238886` is the unused sandbox.)
+- **Zero approved templates ever on this WABA.** Three UTILITY image-header submissions
+  (`santunan_emas_qr_card` v1–v3) were **instantly rejected** — v1 for the sample URL (fixed),
+  v2/v3 "Unknown rejection reason" with clean transactional copy.
+- Diagnosis: this is a **WABA-level block**, not a copy problem. Almost certainly **Meta Business
+  verification is incomplete** for the business behind WABA `2136470433934641` (fits: chatbot works
+  because it only sends session replies; templates need a verified business). `HXaac7685ed2f24136550bd6e0fa38d298`
+  (v3, rejected) is left on the account so SE can open it in Twilio Console for Meta's detailed reason.
+
+**SE / account owner must:**
+1. Meta Business Manager (business.facebook.com) → Security Centre → complete **Business Verification**
+   for the business owning WABA `2136470433934641`.
+2. Then re-run `scripts/whatsapp-template-setup.mjs create` (bump `FRIENDLY_NAME` suffix — Meta burns
+   rejected names), or build it in Twilio Console → Content Template Builder.
+3. On `APPROVED`, set the env vars in §6.
+
+**Fallback if verification stalls:** registration tells the WhatsApp-route user to send any message
+to `+65 8991 3776` first; an inbound message opens a 24h window and SE (or an autoresponder) replies
+with the card as a free-form media message — no template needed. Different UX (needs a user action).
 
 ### 3.7 Admin dashboard
 - `GET /api/admin/participants` + `/[id]` selects → add `serial_code`, `qr_card_url`, `reg_channel`.
@@ -119,9 +142,13 @@ Rationale: decorated QRs scan less reliably; keep the machine-read image clean a
 
 ## 6. Open items for the client / Owen
 
-1. Submit the WhatsApp Utility template above in Twilio; share the resulting **Content SID** → `TWILIO_QR_TEMPLATE_SID`.
-2. Confirm the **SE notification numbers/inbox**: `SE_NOTIFY_EMAIL` (default `info@santunanemas.sg`), `SE_WHATSAPP_NOTIFY_NUMBER`.
-3. Twilio credentials into Vercel env for this project (currently only in the chatbot project).
+1. **Meta Business Verification** for WABA `2136470433934641` (see §3.6) — the blocker for the
+   WhatsApp template. Then run `scripts/whatsapp-template-setup.mjs create` and share the `HX` Content SID.
+2. Confirm the **SE notification numbers/inbox**: `SE_NOTIFY_EMAIL` (default `info@santunanemas.sg`),
+   `SE_WHATSAPP_NOTIFY_NUMBER` (a WhatsApp number SE staff watch — can't be the sender `+6589913776` itself).
+3. Twilio env into the **santunan-emas** Vercel project (currently only on the chatbot project):
+   `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER=whatsapp:+6589913776`,
+   `TWILIO_QR_TEMPLATE_SID=HX…`, `SE_WHATSAPP_NOTIFY_NUMBER=+65…`, `NEXT_PUBLIC_WHATSAPP_ENABLED=true`.
 4. Existing participants: keep their UUID QR; they get a `serial_code` on backfill but **no re-send** unless requested.
 5. Apply migrations `0006`/`0007` to the **production** Supabase project (`bquhcqvjpadrfeurfmfl` per Executor) via CI `supabase db push` or Owen — it is not on the connected Supabase MCP. Reconcile the stale `hqiwdihnihdfjgbjpbqr` comment in `0001` and the `pbeizncjbyyppwtecrau` ref in `.env.local`.
 
