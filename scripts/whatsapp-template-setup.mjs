@@ -27,7 +27,7 @@
 import twilio from "twilio";
 
 // Meta burns the name of a rejected template — bump the suffix to resubmit.
-const FRIENDLY_NAME = "santunan_emas_qr_card_v3";
+const FRIENDLY_NAME = "santunan_emas_qr_card_v4";
 const LANGUAGE = "ms"; // Bahasa Melayu
 const CATEGORY = "UTILITY";
 
