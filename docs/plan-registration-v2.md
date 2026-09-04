@@ -23,8 +23,10 @@ stays gated on `TWILIO_QR_TEMPLATE_SID`.
 
 ## 2. Current system (as built)
 
-- Next.js 16 (webpack) + Supabase (production project `bquhcqvjpadrfeurfmfl`) + Resend + Vercel (`santunan-emas`, domain `attendance.santunanemas.sg`).
-  - Note: `0001_initial_schema.sql` has a stale `hqiwdihnihdfjgbjpbqr` comment; `.env.local` points at `pbeizncjbyyppwtecrau` — both need reconciling with prod.
+- Next.js 16 (webpack) + Supabase project **`pbeizncjbyyppwtecrau`** ("Muttaqin Attendance", ap-southeast-1)
+  + Resend + Vercel project `santunan-emas` (`prj_7Qtl6K84KbXA7OJlHyAycJKu1lGS`, team `team_oyGhPJ0PAP9DNDSN8AZpWDuq`),
+  production domain **`attendance.santunanemas.sg`**. (`hqiwdihnihdfjgbjpbqr` / `bquhcqvjpadrfeurfmfl` refs
+  elsewhere are wrong — ignore.) Migrations `0005`–`0008` applied via MCP.
 - `participants`: `qr_token` (UUID, the QR payload), `qr_image_url` (plain PNG in `qr-codes` bucket), `email` (was UNIQUE — dropped in migration 0005), `phone` (SG mobile, always required).
 - Register flow: `POST /api/register` → insert → `generateQrPng(qr_token)` → upload `<token>.png` → `sendQrEmail`.
 - Retrieve QR: email-only OTP (`otp_requests`), 10-min TTL.
