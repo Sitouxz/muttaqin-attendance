@@ -79,7 +79,8 @@ Rationale: decorated QRs scan less reliably; keep the machine-read image clean a
   sample media URL at submission).
 
 **Twilio state discovered (2026-09-04):**
-- Account `the shared Twilio account` (shared with the chatbot).
+- Twilio account: the same one the Muttaqin Chatbot uses (its SID/token are already in that
+  project's Vercel env — not repeated here).
 - WhatsApp sender **`whatsapp:+6589913776`** — ONLINE, quality HIGH, profile "Masjid Al-Muttaqin SG",
   WABA `2136470433934641`. This is the production sender. (`+14155238886` is the unused sandbox.)
 - **Zero approved templates ever on this WABA.** Three UTILITY image-header submissions
