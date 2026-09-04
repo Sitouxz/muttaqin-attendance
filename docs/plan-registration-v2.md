@@ -1,8 +1,10 @@
 # Registration v2 — Unique Codes, WhatsApp Route, Branded QR
 
 **Source:** ClickUp [86ewztd4c](https://app.clickup.com/t/86ewztd4c), latest client comment (Sep 2026).
-**Status:** Phase 1 in progress · Phase 2 blocked on Twilio template approval.
-**Branch:** `feat/registration-v2` off `codex/allow-duplicate-email-registration` (stacks on the "email optional" PR).
+**Status:** Phase 1 done + migrations applied to `pbeizncjbyyppwtecrau` · WhatsApp shipping via
+**Path B (inbound-first)** while Meta business verification is pending · cold template send (Path A)
+stays gated on `TWILIO_QR_TEMPLATE_SID`.
+**Branches:** `feat/registration-v2` (santunan-emas) · `feat/wa-qr-delivery` (Muttaqin Chatbot).
 
 ---
 
@@ -93,9 +95,24 @@ Rationale: decorated QRs scan less reliably; keep the machine-read image clean a
    rejected names), or build it in Twilio Console → Content Template Builder.
 3. On `APPROVED`, set the env vars in §6.
 
-**Fallback if verification stalls:** registration tells the WhatsApp-route user to send any message
-to `+65 8991 3776` first; an inbound message opens a 24h window and SE (or an autoresponder) replies
-with the card as a free-form media message — no template needed. Different UX (needs a user action).
+### 3.6b Path B — inbound-first delivery (SHIPPED, no verification needed)
+
+Registration marks a WhatsApp-route registrant `wa_qr_pending` (card still generated + stored).
+The success page shows a `wa.me/6589913776?text=…` button. When they message the SE number, an
+inbound hits the **chatbot** webhook (`feat/wa-qr-delivery`), which — before RAG — calls the
+attendance app's `POST /api/whatsapp/claim-qr` (bearer `WA_CLAIM_SECRET`). If a card is pending for
+that phone, the endpoint clears the flag and returns it, and the chatbot sends it as a free-form
+media message inside the now-open 24h window.
+
+- Migration `0008`: `participants.wa_qr_pending BOOLEAN`.
+- `register` route: template send used only when `isWhatsAppConfigured()` (i.e. `TWILIO_QR_TEMPLATE_SID`
+  set); otherwise → `wa_qr_pending=true`, `delivery: "awaiting_whatsapp"`.
+- Admin: "QR pending" badge in the participants list + a note on the detail page. `resend-qr` re-arms
+  the flag when the template isn't configured.
+- Chatbot env: `ATTENDANCE_APP_URL`, `WA_CLAIM_SECRET`. Attendance env: `WA_CLAIM_SECRET`,
+  `NEXT_PUBLIC_SE_WHATSAPP_NUMBER=6589913776`.
+- When Path A (verification + approved template) lands, set `TWILIO_QR_TEMPLATE_SID` and the register
+  route switches to cold template sends automatically; Path B stays as the fallback for send failures.
 
 ### 3.7 Admin dashboard
 - `GET /api/admin/participants` + `/[id]` selects → add `serial_code`, `qr_card_url`, `reg_channel`.
