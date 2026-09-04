@@ -17,7 +17,14 @@ export async function POST(req: NextRequest) {
 
   const { data: participant, error } = await serviceClient
     .from("participants")
-    .insert({ ...rest, reg_channel, email: email || null })
+    .insert({
+      ...rest,
+      reg_channel,
+      email: email || null,
+      // WhatsApp cards are delivered inbound-first; arm it up front so a
+      // card-generation hiccup below still leaves the registrant claimable.
+      wa_qr_pending: reg_channel === "whatsapp",
+    })
     .select()
     .single();
 
@@ -39,6 +46,8 @@ export async function POST(req: NextRequest) {
       .eq("id", participant.id);
 
     if (reg_channel === "whatsapp") {
+      // wa_qr_pending is already true from the insert. Only a successful
+      // business-initiated template send clears it here.
       if (isWhatsAppConfigured()) {
         const result = await sendQrWhatsApp({
           full_name: participant.full_name,
@@ -47,19 +56,15 @@ export async function POST(req: NextRequest) {
           qr_card_url: urls.qr_card_url,
         });
         if (result.delivered) {
-          delivery = "sent";
-        } else {
           await serviceClient
             .from("participants")
-            .update({ wa_qr_pending: true })
+            .update({ wa_qr_pending: false })
             .eq("id", participant.id);
+          delivery = "sent";
+        } else {
           delivery = "awaiting_whatsapp";
         }
       } else {
-        await serviceClient
-          .from("participants")
-          .update({ wa_qr_pending: true })
-          .eq("id", participant.id);
         delivery = "awaiting_whatsapp";
       }
     } else {

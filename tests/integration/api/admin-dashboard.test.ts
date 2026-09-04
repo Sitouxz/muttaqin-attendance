@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
     auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
     },
   }),
 }));
@@ -47,7 +47,7 @@ describe("GET /api/admin/dashboard/stats", () => {
     const { createClient } = await import("@/lib/supabase/server");
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
       },
     } as unknown as Awaited<ReturnType<typeof createClient>>);
 
@@ -61,8 +61,8 @@ describe("GET /api/admin/dashboard/stats", () => {
     const { createClient } = await import("@/lib/supabase/server");
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: "user-1", email: "admin@test.com" } },
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { user: { id: "user-1", email: "admin@test.com" } } },
         }),
       },
     } as unknown as Awaited<ReturnType<typeof createClient>>);

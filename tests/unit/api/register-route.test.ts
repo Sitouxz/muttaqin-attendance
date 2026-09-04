@@ -115,14 +115,13 @@ describe("POST /api/register", () => {
     expect(res.status).toBe(201);
     await expect(res.json()).resolves.toMatchObject({ delivery: "awaiting_whatsapp" });
     expect(mocks.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ reg_channel: "whatsapp", email: null }),
+      expect.objectContaining({ reg_channel: "whatsapp", email: null, wa_qr_pending: true }),
     );
-    expect(mocks.update).toHaveBeenCalledWith({ wa_qr_pending: true });
     expect(mocks.sendQrWhatsApp).not.toHaveBeenCalled();
     expect(mocks.sendQrEmail).not.toHaveBeenCalled();
   });
 
-  it("WhatsApp, template configured: sends over WhatsApp", async () => {
+  it("WhatsApp, template configured: sends over WhatsApp and clears pending", async () => {
     mocks.participant.reg_channel = "whatsapp";
     mocks.participant.email = null as unknown as string;
     mocks.isWhatsAppConfigured.mockReturnValue(true);
@@ -134,5 +133,16 @@ describe("POST /api/register", () => {
     expect(res.status).toBe(201);
     await expect(res.json()).resolves.toMatchObject({ delivery: "sent" });
     expect(mocks.sendQrWhatsApp).toHaveBeenCalledOnce();
+    expect(mocks.update).toHaveBeenCalledWith({ wa_qr_pending: false });
+  });
+
+  it("email registration is not armed for inbound WhatsApp", async () => {
+    mocks.participant.reg_channel = "email";
+    mocks.participant.email = "nur@example.com";
+    const { POST } = await import("@/app/api/register/route");
+    await POST(postRequest({ ...baseRegistration, reg_channel: "email", email: "nur@example.com" }));
+    expect(mocks.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ reg_channel: "email", wa_qr_pending: false }),
+    );
   });
 });

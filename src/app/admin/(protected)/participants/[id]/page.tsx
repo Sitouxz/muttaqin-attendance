@@ -64,7 +64,12 @@ export default function ParticipantDetailPage() {
     setResendMsg(null);
     const res = await fetch(`/api/admin/participants/${id}/resend-qr`, { method: "POST" });
     if (res.ok) {
-      setResendMsg("QR successfully resent");
+      const json = await res.json().catch(() => ({}));
+      setResendMsg(
+        json?.status === "awaiting_whatsapp"
+          ? "Re-armed — the card will be sent when they next message the SE number"
+          : "QR sent",
+      );
       await fetchData();
     } else {
       setResendMsg("An error occurred");

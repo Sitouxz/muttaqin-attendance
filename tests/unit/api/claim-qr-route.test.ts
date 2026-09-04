@@ -83,4 +83,20 @@ describe("POST /api/whatsapp/claim-qr", () => {
     const res = await POST(req({ phone: "123" }));
     expect(res.status).toBe(400);
   });
+
+  it("release re-arms the pending flag for the given serial", async () => {
+    const { POST } = await import("@/app/api/whatsapp/claim-qr/route");
+    const res = await POST(
+      req({ phone: "whatsapp:+6591234567", release: true, serial_code: "SE0024" }),
+    );
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ released: true });
+    expect(state.updateArg).toEqual({ wa_qr_pending: true });
+  });
+
+  it("release without a serial is rejected", async () => {
+    const { POST } = await import("@/app/api/whatsapp/claim-qr/route");
+    const res = await POST(req({ phone: "whatsapp:+6591234567", release: true }));
+    expect(res.status).toBe(400);
+  });
 });
