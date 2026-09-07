@@ -47,10 +47,7 @@ export default function ManualPage() {
   const programmeIds = programmeId ? [programmeId] : [];
 
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
-      setParticipants([]);
-      return;
-    }
+    if (debouncedQuery.length < 2) return;
     setLoading(true);
     fetch(`/api/check-in/lookup?q=${encodeURIComponent(debouncedQuery)}`)
       .then((r) => r.json())
@@ -60,6 +57,10 @@ export default function ManualPage() {
       .catch(() => setParticipants([]))
       .finally(() => setLoading(false));
   }, [debouncedQuery]);
+
+  // Derived rather than cleared in the effect: a query too short to search shows
+  // nothing, instead of briefly showing the previous query's hits.
+  const visibleParticipants = debouncedQuery.length < 2 ? [] : participants;
 
   const handleCheckIn = async (participant: Participant) => {
     if (!sessionId || programmeIds.length === 0) {
@@ -131,13 +132,13 @@ export default function ManualPage() {
           </p>
         )}
 
-        {!loading && debouncedQuery.length >= 2 && participants.length === 0 && (
+        {!loading && debouncedQuery.length >= 2 && visibleParticipants.length === 0 && (
           <p className="text-white/50 text-sm text-center py-4">
             Tiada hasil / No results found
           </p>
         )}
 
-        {participants.map((p) => (
+        {visibleParticipants.map((p) => (
           <div
             key={p.id}
             className="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { REGION_COLOURS } from "@/lib/utils/sg-regions";
@@ -9,6 +9,10 @@ import type { SGRegion } from "@/lib/utils/sg-regions";
 interface SingaporeLeafletMapProps {
   regions: { name: SGRegion; count: number }[];
 }
+
+/** Hydration state never changes after the first client render, so this store
+ *  has nothing to publish. Defined once so React does not resubscribe. */
+const noopSubscribe = () => () => {};
 
 const REGION_LABELS: Record<SGRegion, string> = {
   Central: "Tengah",
@@ -30,11 +34,14 @@ const LABEL_OFFSETS: Record<SGRegion, [number, number]> = {
 export function SingaporeLeafletMap({ regions }: SingaporeLeafletMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Leaflet needs a real DOM node, so the map container is withheld until after
+  // hydration. useSyncExternalStore gives false on the server and during the
+  // hydrating render, then true — without a setState-in-effect round trip.
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     if (!mounted || !mapRef.current || mapInstanceRef.current) return;
