@@ -3,7 +3,7 @@
  * Run: npx playwright test tests/e2e/audit-screenshots.spec.ts --workers=1
  * Screenshots land in: test-results/audit/
  */
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -13,7 +13,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const ADMIN_EMAIL    = "admin@santunanemas.sg";
 const ADMIN_PASSWORD = "Admin@2026!";
 
-async function shot(page: any, name: string) {
+async function shot(page: Page, name: string) {
   await page.screenshot({
     path: path.join(OUT, `${name}.png`),
     fullPage: true,
@@ -71,7 +71,7 @@ test("07 Admin login /admin/login", async ({ page }) => {
 });
 
 // Shared login helper — runs before each admin test
-async function loginAsAdmin(page: any) {
+async function loginAsAdmin(page: Page) {
   await page.goto("/admin/login");
   await page.locator("#email").fill(ADMIN_EMAIL);
   await page.locator("#password").fill(ADMIN_PASSWORD);

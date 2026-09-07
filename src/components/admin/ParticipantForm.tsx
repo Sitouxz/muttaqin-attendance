@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Switch } from "@/components/ui/switch";
 
+type Gender = "male" | "female" | "unspecified";
+
 interface ParticipantFormData {
   id?: string;
   full_name: string;
   email: string;
   phone: string;
   age: number;
-  gender: "male" | "female" | "unspecified";
+  gender: Gender;
   postal_code: string;
   is_active: boolean;
 }
@@ -33,7 +35,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
     email: initialData?.email ?? "",
     phone: initialData?.phone ?? "",
     age: initialData?.age ?? 18,
-    gender: (initialData as any)?.gender ?? "unspecified",
+    gender: initialData?.gender ?? "unspecified",
     postal_code: initialData?.postal_code ?? "",
     is_active: initialData?.is_active ?? true,
   });
@@ -150,7 +152,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
           id="gender"
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
           value={form.gender}
-          onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as any }))}
+          onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as Gender }))}
         >
           <option value="unspecified">Unspecified</option>
           <option value="male">Male</option>

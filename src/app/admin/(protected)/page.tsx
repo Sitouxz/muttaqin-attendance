@@ -1,5 +1,4 @@
 import { Users, Calendar, ClipboardCheck, BookOpen } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { AttendanceTrendChart } from "@/components/admin/AttendanceTrendChart";

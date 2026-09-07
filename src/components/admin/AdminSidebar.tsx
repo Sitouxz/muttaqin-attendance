@@ -96,7 +96,7 @@ export function AdminSidebar() {
             >
               <Icon className="size-5 shrink-0" />
               <div className="flex flex-col">
-                <span className="text-sm font-medium leading-tight">{(link as any).label}</span>
+                <span className="text-sm font-medium leading-tight">{link.label}</span>
               </div>
             </Link>
           );

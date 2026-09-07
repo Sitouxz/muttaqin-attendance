@@ -18,8 +18,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription,
-  DialogFooter
+  DialogDescription
 } from "@/components/ui/dialog";
 import { ParticipantForm } from "@/components/admin/ParticipantForm";
 
@@ -466,7 +465,7 @@ export default function ParticipantsPage() {
           <DialogHeader>
             <DialogTitle>Edit Participant</DialogTitle>
             <DialogDescription>
-              Update participant's personal information.
+              Update participant&apos;s personal information.
             </DialogDescription>
           </DialogHeader>
           {editingParticipant && (

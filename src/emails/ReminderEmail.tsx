@@ -1,5 +1,5 @@
 import {
-  Body, Container, Head, Heading, Html, Img, Link,
+  Body, Container, Head, Heading, Html, Img,
   Preview, Section, Text,
 } from "@react-email/components";
 import { formatDateSGT } from "@/lib/utils/format";

@@ -15,7 +15,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { REGION_COLOURS } from "@/lib/utils/sg-regions";
