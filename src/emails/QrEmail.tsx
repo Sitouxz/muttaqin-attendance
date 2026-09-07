@@ -1,5 +1,5 @@
 import {
-  Body, Container, Head, Heading, Html, Img, Link,
+  Body, Button, Container, Head, Heading, Html, Img,
   Preview, Section, Text,
 } from "@react-email/components";
 
@@ -48,20 +48,26 @@ export function QrEmail({ participant }: QrEmailProps) {
             />
           </Section>
 
-          <Section style={{ textAlign: "center" }}>
-            <Link
+          <Section style={{ textAlign: "center", margin: "24px 0 0" }}>
+            <Button
               href={participant.qr_card_url}
               style={{
                 backgroundColor: "#173d35",
                 color: "#ffffff",
-                padding: "12px 24px",
+                padding: "14px 28px",
                 borderRadius: 8,
                 textDecoration: "none",
                 fontWeight: "bold",
+                fontSize: 16,
+                lineHeight: "20px",
+                textAlign: "center",
               }}
             >
-              Muat Turun Kod QR / Download QR Card
-            </Link>
+              Muat Turun Kod QR
+            </Button>
+            <Text style={{ color: "#777", fontSize: 13, margin: "8px 0 0" }}>
+              Download QR Card
+            </Text>
           </Section>
 
           <Text style={{ color: "#555", fontSize: 14, marginTop: 24 }}>
