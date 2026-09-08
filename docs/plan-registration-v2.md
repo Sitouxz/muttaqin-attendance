@@ -98,6 +98,50 @@ Rationale: decorated QRs scan less reliably; keep the machine-read image clean a
    rejected names), or build it in Twilio Console → Content Template Builder.
 3. On `APPROVED`, set the env vars in §6.
 
+### 3.6a Template submissions v4/v5 — both rejected, findings (Sep 2026)
+
+Executor reported Meta business verification complete, so v4 and v5 were submitted. **Both rejected**,
+`rejection_reason: "Unknown rejection reason"` — same as v1–v3. Two things were found and one was
+fixed; the actual blocker is still unconfirmed and the next step is in Meta's UI, not code.
+
+| Submission | SID | Change tried | Result |
+|---|---|---|---|
+| v4 | `HX07786b0daf4d02c9e34dde976152ec7c` | none (re-submit post-verification) | rejected |
+| v5 | `HXe5641d554cc1cdc6fa1d41d50b63bf7b` | media as static prefix + path variable | rejected |
+
+**Fixed — `friendly_name` was never being set.** `client.content.v1.contents.create()` posts its
+params object verbatim as JSON (`data = params` in the SDK, no camelCase→snake_case mapping), so
+`friendlyName` went as an unknown key and was dropped. Every template we created is stored nameless,
+which also broke the "reuse existing template" guard and left an orphan per attempt. The script now
+sends `friendly_name`. Note Meta *did* receive a name — `approvalCreate` passes `name` separately and
+the approval object echoes `santunan_emas_qr_card_v5` — so this is bookkeeping, probably not the
+rejection cause.
+
+**Unresolved — the WABA looks unverified despite the report.** Read-only probe of sender
+`XE5dd8b70876c610ad081f85eab8a795d9` (`whatsapp:+6589913776`, WABA `2136470433934641`):
+
+```
+status: ONLINE   quality_rating: HIGH
+messaging_limit: "Unavailable"      <-- no messaging tier assigned
+account_type: null
+```
+
+A WABA in good standing carries a messaging tier here. `Unavailable` + `account_type: null` +
+templates rejected with no reason is the coherent signature of a business that is **not** verified —
+which is what §3.6 suspected all along. Sending session replies (what the chatbot does) needs none of
+this, which is why the chatbot has always worked.
+
+**Next step is in Meta Business Manager, not this repo. Do not submit a v6 first.**
+1. Business Settings → Security Centre → confirm verification reads **Verified**, not
+   *Pending review* / *Needs more info*.
+2. WhatsApp Manager → WABA `2136470433934641` → Message templates → open the rejected
+   `santunan_emas_qr_card_v5` for Meta's real reason (the API only ever returns the opaque string).
+3. WhatsApp Manager → Phone numbers → `+65 8991 3776` → the messaging limit should show a tier once
+   verification lands. While it reads *Unavailable*, expect further rejections.
+
+Templates v4 and v5 are deliberately left on the account so SE can open them in Console for the
+detailed reason. Delete them only after that has been read.
+
 ### 3.6b Path B — inbound-first delivery (SHIPPED, no verification needed)
 
 Registration marks a WhatsApp-route registrant `wa_qr_pending` (card still generated + stored).

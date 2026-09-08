@@ -106,8 +106,13 @@ async function create() {
   if (existing) {
     console.log("Reusing existing template:", existing.sid);
   } else {
+    // The Content SDK posts this object verbatim as JSON (`data = params`) with
+    // no camelCase -> snake_case mapping, so the field MUST be `friendly_name`.
+    // `friendlyName` is silently dropped as an unknown key and the template is
+    // stored nameless — which is why the reuse lookup below never matched and
+    // v1-v5 each left an orphan behind.
     content = await client.content.v1.contents.create({
-      friendlyName: FRIENDLY_NAME,
+      friendly_name: FRIENDLY_NAME,
       language: LANGUAGE,
       variables: SAMPLE,
       types: {
