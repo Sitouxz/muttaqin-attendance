@@ -27,15 +27,26 @@
 import twilio from "twilio";
 
 // Meta burns the name of a rejected template — bump the suffix to resubmit.
-const FRIENDLY_NAME = "santunan_emas_qr_card_v5";
+const FRIENDLY_NAME = "santunan_emas_qr_card_v6";
 const LANGUAGE = "ms"; // Bahasa Melayu
 const CATEGORY = "UTILITY";
 
-// {{1}} = QR card image URL (media header), {{2}} = serial code (SE0001).
+// {{1}} = card filename under MEDIA_BASE (media header), {{2}} = serial code.
 // Matches contentVariables in src/lib/whatsapp/send-qr.ts.
+//
+// Reworded for v6. v1-v5 all carried one identical body, and Meta rejects a
+// template whose content matches an existing one (error 63040, "Template
+// content is identical to the content of another existing template") — which
+// is the only cause left after Meta's own preview rendered the media, body,
+// category and language correctly and still rejected it.
+//
+// Constraints this has to keep satisfying: no variable at the start or end of
+// the body, no two variables adjacent, no newline characters, and at least
+// (2x + 1) non-variable words for x variables.
 const BODY =
-  "Pendaftaran anda telah berjaya. Nombor rujukan anda ialah {{2}}. " +
-  "Sila simpan kod QR ini dan tunjukkannya semasa pendaftaran.";
+  "Terima kasih kerana mendaftar dengan Santunan Emas. Kod rujukan {{2}} telah " +
+  "dikeluarkan untuk anda. Sila simpan kad QR di atas dan tunjukkannya untuk " +
+  "pengesahan kehadiran pada setiap sesi mingguan.";
 
 // Meta validates the media header as a STATIC prefix plus a variable path suffix
 // (twilio/media docs: `media: ["https://example.com/{{1}}"]` with the variable

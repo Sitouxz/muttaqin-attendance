@@ -10,8 +10,10 @@ import { getTwilioClient, isWhatsAppConfigured, requireEnv, toWhatsAppAddress } 
  * `scripts/whatsapp-template-setup.mjs` — an image-header UTILITY template:
  *
  *   Header:  Media (image)  -> `${WHATSAPP_CARD_MEDIA_BASE}{{1}}`
- *   Body:    "Pendaftaran anda telah berjaya. Nombor rujukan anda ialah {{2}}.
- *             Sila simpan kod QR ini dan tunjukkannya semasa pendaftaran."
+ *   Body:    "Terima kasih kerana mendaftar dengan Santunan Emas. Kod rujukan
+ *             {{2}} telah dikeluarkan untuk anda. Sila simpan kad QR di atas
+ *             dan tunjukkannya untuk pengesahan kehadiran pada setiap sesi
+ *             mingguan."
  *
  * Set TWILIO_QR_TEMPLATE_SID to its Content SID (HX...) to activate sending.
  */
