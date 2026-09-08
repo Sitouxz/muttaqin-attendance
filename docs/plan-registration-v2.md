@@ -98,16 +98,32 @@ Rationale: decorated QRs scan less reliably; keep the machine-read image clean a
    rejected names), or build it in Twilio Console → Content Template Builder.
 3. On `APPROVED`, set the env vars in §6.
 
-### 3.6a Template submissions v4/v5 — both rejected, findings (Sep 2026)
+### 3.6a Template approved at v6 — what actually blocked v1-v5 (Sep 2026)
 
-Executor reported Meta business verification complete, so v4 and v5 were submitted. **Both rejected**,
-`rejection_reason: "Unknown rejection reason"` — same as v1–v3. Two things were found and one was
-fixed; the actual blocker is still unconfirmed and the next step is in Meta's UI, not code.
+**RESOLVED. `santunan_emas_qr_card_v6` = `HX4a668156773a8ee3c1ec1bc6cd872ad5` is APPROVED.**
+
+Business verification *was* complete (NEU ENTITY PTE. LTD., verified 4 Sep 2026) — the
+`messaging_limit: "Unavailable"` reading that suggested otherwise was a red herring. The real cause
+was **duplicate content**: v1-v5 all carried one byte-identical body, and Meta rejects a template
+whose content matches an existing one (error 63040), returning an empty reason. Rewording the body
+for v6 cleared it. Nothing had to be deleted.
 
 | Submission | SID | Change tried | Result |
 |---|---|---|---|
 | v4 | `HX07786b0daf4d02c9e34dde976152ec7c` | none (re-submit post-verification) | rejected |
 | v5 | `HXe5641d554cc1cdc6fa1d41d50b63bf7b` | media as static prefix + path variable | rejected |
+| v6 | `HX4a668156773a8ee3c1ec1bc6cd872ad5` | **body reworded** (+ `friendly_name` fixed) | **approved** |
+
+Meta's Console preview of the rejected v5 was what cracked it: it rendered the media, the Malay body,
+the Utility category and the language correctly and *still* rejected. That positively eliminated
+every structural cause and left duplication as the only documented one.
+
+**Meta reclassified v6 from UTILITY to MARKETING** (`allow_category_change: true` permitted it).
+Marketing conversations are billed at a higher rate than utility ones and are subject to per-user
+marketing limits, so a registration receipt sitting in that category costs more and is more likely to
+be suppressed. If that matters, a v7 worded more strictly as a transactional receipt — and submitted
+with `allow_category_change: false` — would sit in UTILITY, at the risk of an outright rejection
+instead of a reclassification.
 
 **Fixed — `friendly_name` was never being set.** `client.content.v1.contents.create()` posts its
 params object verbatim as JSON (`data = params` in the SDK, no camelCase→snake_case mapping), so
@@ -117,7 +133,8 @@ sends `friendly_name`. Note Meta *did* receive a name — `approvalCreate` passe
 the approval object echoes `santunan_emas_qr_card_v5` — so this is bookkeeping, probably not the
 rejection cause.
 
-**Unresolved — the WABA looks unverified despite the report.** Read-only probe of sender
+**Red herring, recorded so it isn't chased again — the sender's messaging limit reads
+`Unavailable` even on a fully verified WABA.** Read-only probe of sender
 `XE5dd8b70876c610ad081f85eab8a795d9` (`whatsapp:+6589913776`, WABA `2136470433934641`):
 
 ```
@@ -131,16 +148,13 @@ templates rejected with no reason is the coherent signature of a business that i
 which is what §3.6 suspected all along. Sending session replies (what the chatbot does) needs none of
 this, which is why the chatbot has always worked.
 
-**Next step is in Meta Business Manager, not this repo. Do not submit a v6 first.**
-1. Business Settings → Security Centre → confirm verification reads **Verified**, not
-   *Pending review* / *Needs more info*.
-2. WhatsApp Manager → WABA `2136470433934641` → Message templates → open the rejected
-   `santunan_emas_qr_card_v5` for Meta's real reason (the API only ever returns the opaque string).
-3. WhatsApp Manager → Phone numbers → `+65 8991 3776` → the messaging limit should show a tier once
-   verification lands. While it reads *Unavailable*, expect further rejections.
+**If a template is ever rejected again**, the order that worked: change the body materially first
+(cheapest, and duplication is the most common silent cause), and only then look at structure. Neither
+the Twilio API nor Meta's template Insights page ever shows a reason — the Console *list* view's
+status chip is the only place one might appear, and here it did not.
 
-Templates v4 and v5 are deliberately left on the account so SE can open them in Console for the
-detailed reason. Delete them only after that has been read.
+Templates v3/v4/v5 are left on the account as the rejection record; they are stored with a null
+`friendly_name` and show as "(Unnamed template)" in Console. Safe to delete once nobody needs them.
 
 ### 3.6b Path B — inbound-first delivery (SHIPPED, no verification needed)
 
