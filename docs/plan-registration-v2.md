@@ -47,7 +47,7 @@ stays gated on `TWILIO_QR_TEMPLATE_SID`.
 | Column | Content | Consumer | Bucket path |
 |--------|---------|----------|-------------|
 | `qr_image_url` | plain QR, quiet zone, no decoration | the scanner (`/scan`) | `qr-codes/<qr_token>.png` (unchanged) |
-| `qr_card_url` | branded card: logo · name · QR · `SE0001` · caption | humans — email body, WhatsApp media, admin, print | `qr-codes/cards/<serial>.png` |
+| `qr_card_url` | branded card: logo · name · QR · `SE0001` · caption | humans — email body, WhatsApp media, admin, print | `qr-codes/cards/<qr_token>.png` |
 
 Rationale: decorated QRs scan less reliably; keep the machine-read image clean and give people a separate nice card. Both are generated at registration.
 
@@ -116,6 +116,54 @@ media message inside the now-open 24h window.
   `NEXT_PUBLIC_SE_WHATSAPP_NUMBER=6589913776`.
 - When Path A (verification + approved template) lands, set `TWILIO_QR_TEMPLATE_SID` and the register
   route switches to cold template sends automatically; Path B stays as the fallback for send failures.
+
+### 3.6c Client update (Sep 2026) — SE email copy, QR follow-ups, no-prompt delivery
+
+Three follow-up requests, all shipped on `feat/wa-route-updates` (santunan-emas) and `master`
+(Muttaqin Chatbot):
+
+1. **Every registration reaches SE by email**, not just email-route ones. A WhatsApp-route
+   registrant has no address to BCC, so registration now sends SE its own internal record
+   (`src/emails/RegistrationNoticeEmail.tsx` → `SE_NOTIFY_EMAIL`) carrying name, `SE0001`, phone,
+   email, channel, delivery status and the card image. The admin "Resend QR" action sends the same
+   record with `event: "resent"`. The old `bcc` on `sendQrEmail` is gone — it would have meant two
+   SE emails per email-route registration, and it never covered WhatsApp.
+
+2. **The bot answers QR follow-ups.** The inbound claim (§3.6b) fires once; after that
+   "saya hilang kod QR saya" / "resend my QR" used to fall through to RAG, which cannot produce
+   someone's card. `isQrRequest()` (chatbot, `src/lib/qr-claim.ts`) now recognises those messages in
+   Malay and English and calls `POST /api/whatsapp/claim-qr` with `mode: "lookup"` — read-only,
+   repeatable, and returns *every* card registered to that number (a household shares one phone),
+   capped at 5. No registration for the number → a bilingual "we can't find you, please register"
+   reply instead of a RAG answer. The matcher is deliberately narrow so FAQ questions
+   ("macam mana nak daftar?") still reach RAG.
+
+3. **No-prompt QR delivery.** Sending a card with no inbound at all *is* a Meta-approved template,
+   i.e. still §3.6's business-verification blocker — nothing in code can bypass the 24h window, and
+   a `wa.me` link cannot make a phone send a message by itself. What did change: the success page
+   now renders the branded card and a save button the moment registration succeeds, so nobody has to
+   message the bot (or wait for email) to hold their QR. The WhatsApp button demotes to "want a copy
+   on WhatsApp too?". The card URL travels in the query string and is only rendered when its host
+   matches `NEXT_PUBLIC_SUPABASE_URL`.
+
+**Card path hardening (done, same batch).** `qr_card_url` used to be
+`qr-codes/cards/<serial_code>.png` in a *public* bucket. An exact object path is fetchable with no
+auth and serials run SE0001, SE0002, … — guessing one guessed everyone's, and a card carries a
+scannable QR, so it was a route to checking in as another participant. Cards are now keyed by
+`qr_token` (v4 UUID), matching the plain QR, which was never enumerable.
+
+- `src/lib/qr/assets.ts` writes `cards/<qr_token>.png`; `tests/unit/lib/qr-assets.test.ts` asserts
+  no serial ever reaches a storage path.
+- `scripts/rekey-qr-cards.ts` moved the 6 cards already issued on `pbeizncjbyyppwtecrau`
+  (copy → repoint `qr_card_url` → delete the old object; dry-run by default, `--apply` to move).
+  Verified after: old `cards/SE0025.png` → 400, new token path → 200, 0 rows still serial-keyed.
+- Anonymous bucket *listing* was already refused (no policies on `storage.objects`, confirmed 400),
+  so the path is genuinely the secret.
+- **Side effect:** cards already emailed or WhatsApp'd carry the old URL and now 404. Six rows, of
+  which SE0025/SE0026/SE0027 are real people — SE should hit "Resend QR" for those three, which
+  regenerates at the new path and re-sends.
+- `cards/_sample.png` is left in place: it is synthetic (name "Nur Muhammad", not a participant) and
+  `scripts/whatsapp-template-setup.mjs` submits it to Meta as the template's sample media.
 
 ### 3.7 Admin dashboard
 - `GET /api/admin/participants` + `/[id]` selects → add `serial_code`, `qr_card_url`, `reg_channel`.
