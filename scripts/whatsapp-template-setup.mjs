@@ -27,7 +27,7 @@
 import twilio from "twilio";
 
 // Meta burns the name of a rejected template — bump the suffix to resubmit.
-const FRIENDLY_NAME = "santunan_emas_qr_card_v4";
+const FRIENDLY_NAME = "santunan_emas_qr_card_v5";
 const LANGUAGE = "ms"; // Bahasa Melayu
 const CATEGORY = "UTILITY";
 
@@ -37,8 +37,17 @@ const BODY =
   "Pendaftaran anda telah berjaya. Nombor rujukan anda ialah {{2}}. " +
   "Sila simpan kod QR ini dan tunjukkannya semasa pendaftaran.";
 
+// Meta validates the media header as a STATIC prefix plus a variable path suffix
+// (twilio/media docs: `media: ["https://example.com/{{1}}"]` with the variable
+// holding `path/file.png`). v1-v4 put the whole URL in {{1}} with `media:
+// ["{{1}}"]` and were rejected with no reason string. Keep this prefix in step
+// with WHATSAPP_CARD_MEDIA_BASE in src/lib/whatsapp/send-qr.ts — the approved
+// template bakes it in, so a mismatch silently breaks every send.
+const MEDIA_BASE =
+  "https://pbeizncjbyyppwtecrau.supabase.co/storage/v1/object/public/qr-codes/cards/";
+
 const SAMPLE = {
-  1: "https://pbeizncjbyyppwtecrau.supabase.co/storage/v1/object/public/qr-codes/cards/_sample.png",
+  1: "_sample.png",
   2: "SE0001",
 };
 
@@ -102,7 +111,7 @@ async function create() {
       language: LANGUAGE,
       variables: SAMPLE,
       types: {
-        "twilio/media": { body: BODY, media: ["{{1}}"] },
+        "twilio/media": { body: BODY, media: [`${MEDIA_BASE}{{1}}`] },
       },
     });
     console.log("Created template:", content.sid);
