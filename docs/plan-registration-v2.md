@@ -159,9 +159,12 @@ scannable QR, so it was a route to checking in as another participant. Cards are
   Verified after: old `cards/SE0025.png` → 400, new token path → 200, 0 rows still serial-keyed.
 - Anonymous bucket *listing* was already refused (no policies on `storage.objects`, confirmed 400),
   so the path is genuinely the secret.
-- **Side effect:** cards already emailed or WhatsApp'd carry the old URL and now 404. Six rows, of
-  which SE0025/SE0026/SE0027 are real people — SE should hit "Resend QR" for those three, which
-  regenerates at the new path and re-sends.
+- **Side effect, checked and benign:** cards already sent carry the old URL, which now 404s. Of the
+  six rows, SE0025/SE0026/SE0027 are the real people and all three are WhatsApp-route with
+  `wa_qr_pending = false` — they received the card as a *media message*, which WhatsApp re-hosts on
+  its own CDN, so their copy is unaffected. The only broken link is the inline image in SE0024's
+  email, a `nisa test` row. No resend needed; and if anyone does lose their card they can now just
+  ask the bot for it.
 - `cards/_sample.png` is left in place: it is synthetic (name "Nur Muhammad", not a participant) and
   `scripts/whatsapp-template-setup.mjs` submits it to Meta as the template's sample media.
 
