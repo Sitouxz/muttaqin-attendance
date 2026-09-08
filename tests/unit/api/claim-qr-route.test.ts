@@ -10,6 +10,8 @@ const state = vi.hoisted(() => ({
     | null,
   updateArg: undefined as unknown,
   maybeSingleCalls: 0,
+  // Rows the lookup mode reads; it awaits the chain instead of maybeSingle().
+  rows: [] as { full_name: string; serial_code: string; qr_card_url: string | null }[],
 }));
 
 vi.mock("@/lib/supabase/service", () => ({
@@ -22,6 +24,9 @@ vi.mock("@/lib/supabase/service", () => ({
         state.updateArg = arg;
         return chain;
       };
+      // `lookup` awaits the built query directly, so the chain doubles as a
+      // thenable resolving to the row list.
+      chain.then = (resolve: (v: unknown) => unknown) => resolve({ data: state.rows });
       chain.maybeSingle = () => {
         state.maybeSingleCalls++;
         return Promise.resolve({
@@ -48,6 +53,7 @@ describe("POST /api/whatsapp/claim-qr", () => {
     state.claimed = null;
     state.updateArg = undefined;
     state.maybeSingleCalls = 0;
+    state.rows = [];
   });
 
   it("401 on a wrong secret", async () => {
@@ -98,5 +104,36 @@ describe("POST /api/whatsapp/claim-qr", () => {
     const { POST } = await import("@/app/api/whatsapp/claim-qr/route");
     const res = await POST(req({ phone: "whatsapp:+6591234567", release: true }));
     expect(res.status).toBe(400);
+  });
+
+  it("lookup returns every card for the phone without claiming", async () => {
+    state.rows = [
+      { full_name: "Nur", serial_code: "SE0024", qr_card_url: "https://x/a.png" },
+      { full_name: "Ali", serial_code: "SE0025", qr_card_url: "https://x/b.png" },
+    ];
+    const { POST } = await import("@/app/api/whatsapp/claim-qr/route");
+    const res = await POST(req({ phone: "whatsapp:+6591234567", mode: "lookup" }));
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({
+      found: true,
+      cards: [
+        { name: "Nur", serial_code: "SE0024", qr_card_url: "https://x/a.png" },
+        { name: "Ali", serial_code: "SE0025", qr_card_url: "https://x/b.png" },
+      ],
+    });
+    // Read-only: a follow-up must not flip wa_qr_pending.
+    expect(state.updateArg).toBeUndefined();
+  });
+
+  it("lookup reports found:false when the phone has no registration", async () => {
+    const { POST } = await import("@/app/api/whatsapp/claim-qr/route");
+    const res = await POST(req({ phone: "whatsapp:+6591234567", mode: "lookup" }));
+    await expect(res.json()).resolves.toEqual({ found: false, cards: [] });
+  });
+
+  it("lookup still requires the shared secret", async () => {
+    const { POST } = await import("@/app/api/whatsapp/claim-qr/route");
+    const res = await POST(req({ phone: "whatsapp:+6591234567", mode: "lookup" }, "Bearer nope"));
+    expect(res.status).toBe(401);
   });
 });
