@@ -2,6 +2,7 @@ import { RegisterSchema } from "@/lib/validations/participant";
 import { serviceClient } from "@/lib/supabase/service";
 import { uploadQrAssets } from "@/lib/qr/assets";
 import { sendQrEmail } from "@/lib/email/send-qr";
+import { sendRegistrationNotice } from "@/lib/email/send-registration-notice";
 import { sendQrWhatsApp } from "@/lib/whatsapp/send-qr";
 import { isWhatsAppConfigured } from "@/lib/whatsapp/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -37,8 +38,10 @@ export async function POST(req: NextRequest) {
   // available yet — it goes out when the registrant first messages the SE number
   // (handled by the chatbot webhook via /api/whatsapp/claim-qr).
   let delivery: "sent" | "awaiting_whatsapp" | "failed" = "failed";
+  let qrCardUrl: string | null = null;
   try {
     const urls = await uploadQrAssets(participant);
+    qrCardUrl = urls.qr_card_url;
 
     await serviceClient
       .from("participants")
@@ -84,6 +87,22 @@ export async function POST(req: NextRequest) {
     // Non-fatal — registration succeeded; admin can resend.
   }
 
+  // SE keeps a record of every registration on both channels (client request).
+  // Never throws; a notification problem must not fail the registration.
+  await sendRegistrationNotice({
+    event: "registered",
+    participant: {
+      full_name: participant.full_name,
+      serial_code: participant.serial_code,
+      phone: participant.phone,
+      email: participant.email,
+      reg_channel,
+      qr_card_url: qrCardUrl,
+    },
+    delivery,
+    at: participant.created_at,
+  });
+
   return NextResponse.json(
     {
       success: true,
@@ -91,6 +110,9 @@ export async function POST(req: NextRequest) {
       serial_code: participant.serial_code,
       reg_channel,
       delivery,
+      // Lets the success page show the card straight away, so a WhatsApp-route
+      // registrant has their QR without messaging the bot first.
+      qr_card_url: qrCardUrl,
     },
     { status: 201 },
   );

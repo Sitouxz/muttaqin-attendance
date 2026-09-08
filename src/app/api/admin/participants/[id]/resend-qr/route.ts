@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
 import { uploadQrAssets } from "@/lib/qr/assets";
 import { sendQrEmail } from "@/lib/email/send-qr";
+import {
+  sendRegistrationNotice,
+  type DeliveryOutcome,
+} from "@/lib/email/send-registration-notice";
 import { sendQrWhatsApp } from "@/lib/whatsapp/send-qr";
 
 /**
@@ -45,6 +49,21 @@ export async function POST(
     );
   }
 
+  // SE gets the same record for a resend as for a registration.
+  const notifySE = (delivery: DeliveryOutcome) =>
+    sendRegistrationNotice({
+      event: "resent",
+      participant: {
+        full_name: participant.full_name,
+        serial_code: participant.serial_code,
+        phone: participant.phone,
+        email: participant.email,
+        reg_channel: participant.reg_channel === "whatsapp" ? "whatsapp" : "email",
+        qr_card_url: urls.qr_card_url,
+      },
+      delivery,
+    });
+
   if (participant.reg_channel === "whatsapp") {
     const result = await sendQrWhatsApp({
       full_name: participant.full_name,
@@ -60,6 +79,7 @@ export async function POST(
           .from("participants")
           .update({ wa_qr_pending: true })
           .eq("id", id);
+        await notifySE("awaiting_whatsapp");
         return NextResponse.json({
           success: true,
           channel: "whatsapp",
@@ -67,23 +87,29 @@ export async function POST(
           qr_card_url: urls.qr_card_url,
         });
       }
+      await notifySE("failed");
       return NextResponse.json({ error: result.error }, { status: 502 });
     }
     await serviceClient.from("participants").update({ wa_qr_pending: false }).eq("id", id);
+    await notifySE("sent");
   } else {
     if (!participant.email) {
       return NextResponse.json({ error: "Participant has no email" }, { status: 422 });
     }
-    await sendQrEmail({
+    const emailed = await sendQrEmail({
       full_name: participant.full_name,
       email: participant.email,
       serial_code: participant.serial_code,
       qr_card_url: urls.qr_card_url,
       qr_image_url: urls.qr_image_url,
       qr_token: participant.qr_token,
-    }).catch((err) => {
-      console.error("[resend-qr] email failed:", err);
-    });
+    })
+      .then(() => true)
+      .catch((err) => {
+        console.error("[resend-qr] email failed:", err);
+        return false;
+      });
+    await notifySE(emailed ? "sent" : "failed");
   }
 
   return NextResponse.json({

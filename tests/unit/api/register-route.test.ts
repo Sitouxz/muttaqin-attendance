@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => {
       qr_card_url: "https://example.test/cards/SE0007.png",
     }),
     sendQrEmail: vi.fn().mockResolvedValue({ id: "email-id" }),
+    sendRegistrationNotice: vi.fn().mockResolvedValue(undefined),
     sendQrWhatsApp: vi.fn().mockResolvedValue({ delivered: true, sid: "SM1" }),
     isWhatsAppConfigured: vi.fn(() => false),
   };
@@ -50,6 +51,9 @@ vi.mock("@/lib/supabase/service", () => ({
 }));
 vi.mock("@/lib/qr/assets", () => ({ uploadQrAssets: mocks.uploadQrAssets }));
 vi.mock("@/lib/email/send-qr", () => ({ sendQrEmail: mocks.sendQrEmail }));
+vi.mock("@/lib/email/send-registration-notice", () => ({
+  sendRegistrationNotice: mocks.sendRegistrationNotice,
+}));
 vi.mock("@/lib/whatsapp/send-qr", () => ({ sendQrWhatsApp: mocks.sendQrWhatsApp }));
 vi.mock("@/lib/whatsapp/client", () => ({ isWhatsAppConfigured: mocks.isWhatsAppConfigured }));
 
@@ -88,6 +92,7 @@ describe("POST /api/register", () => {
       serial_code: "SE0007",
       reg_channel: "email",
       delivery: "sent",
+      qr_card_url: "https://example.test/cards/SE0007.png",
     });
 
     expect(mocks.insert).toHaveBeenCalledWith(
@@ -96,6 +101,9 @@ describe("POST /api/register", () => {
     expect(mocks.uploadQrAssets).toHaveBeenCalledOnce();
     expect(mocks.sendQrEmail).toHaveBeenCalledOnce();
     expect(mocks.sendQrWhatsApp).not.toHaveBeenCalled();
+    expect(mocks.sendRegistrationNotice).toHaveBeenCalledWith(
+      expect.objectContaining({ event: "registered", delivery: "sent" }),
+    );
   });
 
   it("rejects an email-channel registration with no email address", async () => {
@@ -119,6 +127,14 @@ describe("POST /api/register", () => {
     );
     expect(mocks.sendQrWhatsApp).not.toHaveBeenCalled();
     expect(mocks.sendQrEmail).not.toHaveBeenCalled();
+    // The client wants SE's own record even when the registrant has no email.
+    expect(mocks.sendRegistrationNotice).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "registered",
+        delivery: "awaiting_whatsapp",
+        participant: expect.objectContaining({ reg_channel: "whatsapp", phone: "91234567" }),
+      }),
+    );
   });
 
   it("WhatsApp, template configured: sends over WhatsApp and clears pending", async () => {

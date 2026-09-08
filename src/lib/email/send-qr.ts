@@ -1,9 +1,13 @@
 import { resend } from "./resend";
 import { QrEmail } from "@/emails/QrEmail";
 
-/** Santunan Emas keeps a copy of every QR sent (client request). */
-export const SE_NOTIFY_EMAIL = process.env.SE_NOTIFY_EMAIL ?? "info@santunanemas.sg";
+export { SE_NOTIFY_EMAIL } from "./recipients";
 
+/**
+ * The registrant's own copy. SE's record is a separate internal email
+ * (`sendRegistrationNotice`) rather than a BCC here, because WhatsApp-route
+ * registrants never get this email at all.
+ */
 export async function sendQrEmail(participant: {
   full_name: string;
   email: string;
@@ -15,7 +19,6 @@ export async function sendQrEmail(participant: {
   return resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "info@santunanemas.sg",
     to: participant.email,
-    bcc: SE_NOTIFY_EMAIL,
     subject: "QR Code Pendaftaran Anda / Your Registration QR Code",
     react: QrEmail({ participant }),
   });
