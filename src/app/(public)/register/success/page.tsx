@@ -1,12 +1,31 @@
+import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, MessageCircle } from "lucide-react";
+import { CheckCircle2, Download, MessageCircle } from "lucide-react";
 
 interface SuccessPageProps {
-  searchParams: Promise<{ name?: string; channel?: string; code?: string }>;
+  searchParams: Promise<{ name?: string; channel?: string; code?: string; card?: string }>;
 }
 
 // SE's WhatsApp sender, digits only (wa.me format).
 const SE_WA = (process.env.NEXT_PUBLIC_SE_WHATSAPP_NUMBER ?? "6589913776").replace(/\D/g, "");
+
+/**
+ * The card URL arrives in the query string, so only accept one that actually
+ * points at our own storage — a crafted `?card=` must not render as if it were
+ * the participant's QR.
+ */
+function safeCardUrl(raw: string | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const supabaseHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
+    if (url.protocol !== "https:") return null;
+    if (url.hostname !== supabaseHost) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
 
 export default async function RegisterSuccessPage({ searchParams }: SuccessPageProps) {
   const params = await searchParams;
@@ -15,6 +34,11 @@ export default async function RegisterSuccessPage({ searchParams }: SuccessPageP
     : null;
   const isWhatsApp = params.channel === "whatsapp";
   const code = params.code ?? null;
+  const cardUrl = safeCardUrl(params.card);
+  // Supabase serves the object with Content-Disposition: attachment for this.
+  const downloadUrl = cardUrl
+    ? `${cardUrl}?download=${encodeURIComponent(`${code ?? "santunan-emas"}.png`)}`
+    : null;
 
   const waText = encodeURIComponent(
     `Salam, saya ingin terima kod QR pendaftaran saya${code ? ` (${code})` : ""}.`,
@@ -48,14 +72,53 @@ export default async function RegisterSuccessPage({ searchParams }: SuccessPageP
             </div>
           )}
 
+          {/* The card is ready the moment registration succeeds — show it here so
+              nobody has to message the bot (or wait for email) to get their QR. */}
+          {cardUrl && (
+            <div className="w-full flex flex-col items-center gap-4">
+              <div>
+                <p className="text-[#173d35] font-semibold">Kod QR anda sudah sedia</p>
+                <p className="text-[#173d35]/60 text-sm mt-0.5">Your QR code is ready</p>
+              </div>
+
+              <Image
+                src={cardUrl}
+                alt={`Kad QR Santunan Emas${code ? ` ${code}` : ""}`}
+                width={320}
+                height={420}
+                unoptimized
+                priority
+                className="w-full max-w-[280px] h-auto rounded-[0.75rem] shadow-[0_8px_24px_rgba(11,28,48,0.12)]"
+              />
+
+              <a
+                href={downloadUrl!}
+                className="flex items-center justify-center gap-2 w-full min-h-[56px] rounded-[1rem] bg-gradient-to-br from-[#173d35] to-[#2f544c] text-white text-lg font-semibold shadow-[0_4px_16px_rgba(23,61,53,0.3)] transition-opacity hover:opacity-90 active:opacity-80"
+              >
+                <Download className="w-5 h-5" strokeWidth={2} />
+                <span className="flex flex-col items-center leading-tight">
+                  <span>Simpan Kod QR</span>
+                  <span className="text-white/80 text-sm font-normal">Save QR code</span>
+                </span>
+              </a>
+              <p className="text-[#173d35]/50 text-xs -mt-2">
+                Tunjukkan kod ini semasa pendaftaran / Show this at registration
+              </p>
+            </div>
+          )}
+
           {isWhatsApp ? (
             <>
               <div>
                 <p className="text-[#173d35] font-semibold">
-                  Hantar mesej WhatsApp untuk terima kod QR anda
+                  {cardUrl
+                    ? "Mahu salinan di WhatsApp juga?"
+                    : "Hantar mesej WhatsApp untuk terima kod QR anda"}
                 </p>
                 <p className="text-[#173d35]/60 text-sm mt-0.5">
-                  Message us on WhatsApp to receive your QR code
+                  {cardUrl
+                    ? "Want a copy on WhatsApp too? Message us and we'll send it."
+                    : "Message us on WhatsApp to receive your QR code"}
                 </p>
               </div>
 
@@ -88,15 +151,22 @@ export default async function RegisterSuccessPage({ searchParams }: SuccessPageP
                 </p>
               </div>
 
-              <Link
-                href="/"
-                className="flex items-center justify-center w-full min-h-[56px] rounded-[1rem] bg-gradient-to-br from-[#173d35] to-[#2f544c] text-white text-lg font-semibold shadow-[0_4px_16px_rgba(23,61,53,0.3)] transition-opacity hover:opacity-90 active:opacity-80"
-              >
-                <span className="flex flex-col items-center leading-tight">
-                  <span>Kembali ke Laman Utama</span>
-                  <span className="text-white/80 text-sm font-normal">Back to Home</span>
-                </span>
-              </Link>
+              {/* The card already owns the primary button when it is shown. */}
+              {cardUrl ? (
+                <Link href="/" className="text-[#173d35]/60 text-sm underline">
+                  Kembali ke Laman Utama / Back to Home
+                </Link>
+              ) : (
+                <Link
+                  href="/"
+                  className="flex items-center justify-center w-full min-h-[56px] rounded-[1rem] bg-gradient-to-br from-[#173d35] to-[#2f544c] text-white text-lg font-semibold shadow-[0_4px_16px_rgba(23,61,53,0.3)] transition-opacity hover:opacity-90 active:opacity-80"
+                >
+                  <span className="flex flex-col items-center leading-tight">
+                    <span>Kembali ke Laman Utama</span>
+                    <span className="text-white/80 text-sm font-normal">Back to Home</span>
+                  </span>
+                </Link>
+              )}
             </>
           )}
         </div>

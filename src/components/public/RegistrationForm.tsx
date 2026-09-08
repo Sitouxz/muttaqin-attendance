@@ -60,6 +60,8 @@ export function RegistrationForm() {
           channel: data.reg_channel,
         });
         if (json?.serial_code) params.set("code", json.serial_code);
+        // Carried through so the success page can show the QR card immediately.
+        if (json?.qr_card_url) params.set("card", json.qr_card_url);
         router.push("/register/success?" + params.toString());
         return;
       }
