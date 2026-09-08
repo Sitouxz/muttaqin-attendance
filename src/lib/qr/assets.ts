@@ -13,8 +13,14 @@ export interface QrAssetUrls {
 
 /**
  * Generates and uploads both QR images for a participant and returns their
- * public URLs. Plain QR is keyed by `qr_token`; the branded card by
- * `serial_code` so it stays stable and human-addressable.
+ * public URLs.
+ *
+ * Both are keyed by `qr_token`. The bucket is public — anyone holding an exact
+ * object path can fetch it without auth — so the path has to be the secret. The
+ * card was previously `cards/<serial_code>.png`, and serials run SE0001, SE0002,
+ * …: guessing one guessed everybody's, and a card carries a scannable QR, so
+ * that was a way to check in as another participant. A v4 UUID is not
+ * enumerable. `scripts/rekey-qr-cards.ts` moved the cards issued before this.
  */
 export async function uploadQrAssets(participant: {
   qr_token: string;
@@ -31,7 +37,7 @@ export async function uploadQrAssets(participant: {
   ]);
 
   const plainPath = `${participant.qr_token}.png`;
-  const cardPath = `cards/${participant.serial_code}.png`;
+  const cardPath = `cards/${participant.qr_token}.png`;
 
   const results = await Promise.all([
     serviceClient.storage
