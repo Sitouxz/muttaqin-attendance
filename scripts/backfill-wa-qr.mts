@@ -10,8 +10,9 @@ import * as path from "path";
  * Uses the app's own `sendQrWhatsApp`, so this exercises exactly the production
  * send path. Twilio accepting a message is not WhatsApp delivering it: after each
  * send this polls the message until it reaches a terminal status, and clears the
- * pending flag only on sent/delivered/read. A failed or undelivered card stays
- * pending, so inbound-first delivery still covers that person.
+ * pending flag only on delivered/read — a device receipt. A failed, undelivered
+ * or still-unconfirmed card stays pending, so inbound-first delivery and the
+ * admin "QR pending" badge still cover that person.
  *
  * Twilio credentials come from the environment; Supabase from .env.local.
  *
@@ -39,8 +40,10 @@ const ONLY = args
   .map((s) => s.trim().toUpperCase())
   .filter(Boolean);
 
-// Twilio's terminal statuses for an outbound WhatsApp message.
-const OK = new Set(["sent", "delivered", "read"]);
+// Only a device receipt counts. "sent" is not terminal: WhatsApp can still report
+// undelivered after it — in the first backfill SE0034 went sent -> undelivered
+// (63024) after this script had already cleared its pending flag.
+const OK = new Set(["delivered", "read"]);
 const BAD = new Set(["failed", "undelivered", "canceled"]);
 
 /**
