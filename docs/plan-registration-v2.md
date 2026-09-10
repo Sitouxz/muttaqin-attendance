@@ -156,6 +156,34 @@ status chip is the only place one might appear, and here it did not.
 Templates v3/v4/v5 are left on the account as the rejection record; they are stored with a null
 `friendly_name` and show as "(Unnamed template)" in Console. Safe to delete once nobody needs them.
 
+### 3.6c Go-live — cold sends on, backfill, delivery callback (11 Sep 2026)
+
+- **Cold template sends are live.** santunan-emas Production carries `TWILIO_ACCOUNT_SID`,
+  `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER=whatsapp:+6589913776` and
+  `TWILIO_QR_TEMPLATE_SID=HX4a668156773a8ee3c1ec1bc6cd872ad5` — Production only, so a preview build
+  can never send real WhatsApp. The template's category settled back to UTILITY.
+- **Backfill.** `scripts/backfill-wa-qr.mts` sent the approved template, through the app's own
+  `sendQrWhatsApp`, to registrants still pending from before go-live. Canary to test row SE0029
+  first (delivered). Of the 8 real registrants:
+  - delivered — SE0048, SE0049, SE0053
+  - only `sent` after 10 min, re-flagged pending (phones likely offline) — SE0040, SE0046, SE0047
+  - undelivered, 63024 — SE0034, SE0054: not active WhatsApp accounts; **SE must reach them
+    another way** (they did see their card on the success page)
+  - test rows SE0028 / SE0050 deliberately left alone
+- **Two traps, both now guarded in the script.** The chatbot's local `.env.local` uses the WhatsApp
+  *Sandbox* sender, so the first canary failed with 63015 — always set `TWILIO_WHATSAPP_NUMBER`
+  explicitly. And `sent` is not terminal: SE0034 went `sent` → `undelivered` after being marked
+  done, so only `delivered`/`read` count as success.
+- **Delivery status callback — `/api/whatsapp/status`.** Registration clears `wa_qr_pending` on
+  Twilio *acceptance*, which the backfill showed is not delivery (2 of 8 failed afterwards). Every
+  registrant send now carries a `statusCallback`; on failed/undelivered the route puts the flag
+  back, so the admin "QR pending" badge and inbound-first delivery still cover that person.
+  Twilio-signed, participant id carried in the signed URL, no migration. Omitted when there's no
+  public https origin, and never attached to SE's copy.
+- **Stale-pending caveat.** SE0040/0046/0047 were sent before the callback existed. If their phones
+  come online they'll receive the card while their badge still says pending — harmless; at worst a
+  duplicate card if they message in.
+
 ### 3.6b Path B — inbound-first delivery (SHIPPED, no verification needed)
 
 Registration marks a WhatsApp-route registrant `wa_qr_pending` (card still generated + stored).
