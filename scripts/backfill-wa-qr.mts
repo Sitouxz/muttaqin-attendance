@@ -110,6 +110,7 @@ async function main() {
 
   for (const p of targets) {
     const result = await sendQrWhatsApp({
+      participant_id: p.id,
       full_name: p.full_name,
       phone: p.phone,
       serial_code: p.serial_code,

@@ -1,4 +1,4 @@
-import { getTwilioClient, isWhatsAppConfigured, requireEnv, toWhatsAppAddress } from "./client";
+import { appBaseUrl, getTwilioClient, isWhatsAppConfigured, requireEnv, toWhatsAppAddress } from "./client";
 
 /**
  * Sends the branded QR card to a participant over WhatsApp, and (best-effort) a
@@ -40,6 +40,18 @@ export function cardMediaVariable(qrCardUrl: string): string | null {
   return suffix && !suffix.includes("/") ? suffix : null;
 }
 
+/**
+ * Delivery-status webhook for one registrant's card. Twilio accepting a send is
+ * not WhatsApp delivering it — a number with no WhatsApp account fails minutes
+ * later (63024) — so the status route re-flags the registrant when that happens.
+ * Undefined when there's no participant or no public https origin to call back.
+ */
+export function statusCallbackUrl(participantId: string | undefined): string | undefined {
+  const base = appBaseUrl();
+  if (!base || !participantId) return undefined;
+  return `${base}/api/whatsapp/status?pid=${encodeURIComponent(participantId)}`;
+}
+
 export interface WhatsAppQrResult {
   delivered: boolean;
   reason?: "not_configured" | "send_failed" | "bad_media_url";
@@ -48,6 +60,8 @@ export interface WhatsAppQrResult {
 }
 
 export async function sendQrWhatsApp(participant: {
+  /** Lets the status webhook re-flag this registrant if delivery fails. */
+  participant_id?: string;
   full_name: string;
   phone: string;
   serial_code: string;
@@ -78,6 +92,8 @@ export async function sendQrWhatsApp(participant: {
       to: toWhatsAppAddress(participant.phone),
       contentSid: templateSid,
       contentVariables,
+      // Registrant send only — the SE copy below must never re-flag anyone.
+      statusCallback: statusCallbackUrl(participant.participant_id),
     });
 
     // Copy to SE — non-fatal.

@@ -35,6 +35,23 @@ export function getTwilioClient(): Twilio {
   return client;
 }
 
+/**
+ * Public https origin of this app, or "" when Twilio couldn't reach it (unset,
+ * http, or localhost). Twilio signs its callbacks over the exact URL it was
+ * given, so the status route rebuilds that URL from this same base.
+ */
+export function appBaseUrl(): string {
+  const base = cleanEnv(process.env.NEXT_PUBLIC_APP_URL).replace(/\/+$/, "");
+  if (!base.startsWith("https://")) return "";
+  try {
+    const host = new URL(base).hostname;
+    if (host === "localhost" || host === "127.0.0.1") return "";
+  } catch {
+    return "";
+  }
+  return base;
+}
+
 /** Normalise an SG mobile (stored as 8 digits) or raw input to `whatsapp:+E.164`. */
 export function toWhatsAppAddress(phone: string): string {
   const trimmed = phone.trim();

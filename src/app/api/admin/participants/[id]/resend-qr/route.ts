@@ -66,6 +66,7 @@ export async function POST(
 
   if (participant.reg_channel === "whatsapp") {
     const result = await sendQrWhatsApp({
+      participant_id: participant.id,
       full_name: participant.full_name,
       phone: participant.phone,
       serial_code: participant.serial_code,

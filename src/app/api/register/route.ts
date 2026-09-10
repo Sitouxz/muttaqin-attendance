@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       // business-initiated template send clears it here.
       if (isWhatsAppConfigured()) {
         const result = await sendQrWhatsApp({
+          participant_id: participant.id,
           full_name: participant.full_name,
           phone: participant.phone,
           serial_code: participant.serial_code,
