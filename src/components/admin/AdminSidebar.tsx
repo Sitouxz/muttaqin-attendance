@@ -8,6 +8,7 @@ import {
   Users,
   ClipboardCheck,
   BookOpen,
+  Activity,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -35,6 +36,11 @@ const navLinks = [
     href: "/admin/attendance",
     icon: ClipboardCheck,
     label: "Attendance",
+  },
+  {
+    href: "/admin/monitoring",
+    icon: Activity,
+    label: "Monitoring",
   },
   {
     href: "/admin/programmes",
