@@ -29,21 +29,24 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Auth guard for /admin (except /admin/login)
+  // Auth guard for /admin (except /admin/login) and for the scanner.
   const { response, user } = await updateSession(request);
 
-  if (
-    request.nextUrl.pathname.startsWith("/admin") &&
-    !request.nextUrl.pathname.startsWith("/admin/login")
-  ) {
-    if (!user) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
-    }
+  const { pathname } = request.nextUrl;
+  const guarded =
+    (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) ||
+    // The scanner reads participant data and writes attendance, and the schema
+    // has always expected an operator behind a check-in (attendance.checked_in_by
+    // references admins). It is staff-only, not public.
+    pathname.startsWith("/scan");
+
+  if (guarded && !user) {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/register"],
+  matcher: ["/admin/:path*", "/scan/:path*", "/api/register"],
 };

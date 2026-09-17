@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { createClient } from "@/lib/supabase/client";
 import { UserPlus, Trash2, Send, Star } from "lucide-react";
-// createClient still used for invite + deactivate actions
 
 interface AdminUser {
   id: string;
@@ -72,24 +70,30 @@ export default function SettingsPage() {
     setInviting(true);
     setInviteMsg(null);
 
-    const supabase = createClient();
-    const { error } = await (supabase.auth.admin as unknown as {
-      inviteUserByEmail: (email: string) => Promise<{ error: { message: string } | null }>;
-    }).inviteUserByEmail(inviteEmail);
+    const res = await fetch("/api/admin/admins", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: inviteEmail }),
+    });
 
-    if (error) {
-      setInviteMsg(`Ralat: ${error.message}`);
-    } else {
+    if (res.ok) {
       setInviteMsg(`Invitation sent to ${inviteEmail}`);
       setInviteEmail("");
+    } else {
+      const { error } = await res.json().catch(() => ({ error: res.statusText }));
+      setInviteMsg(`Ralat: ${error ?? "Invite failed"}`);
     }
     setInviting(false);
   }
 
   async function handleDeactivate(id: string) {
     if (!confirm("Deactivate this admin?")) return;
-    const supabase = createClient();
-    await supabase.from("admins").update({ is_active: false }).eq("id", id);
+    const res = await fetch(`/api/admin/admins/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: res.statusText }));
+      alert(`Could not deactivate: ${error ?? "unknown error"}`);
+      return;
+    }
     setAdmins((prev) => prev.filter((a) => a.id !== id));
   }
 

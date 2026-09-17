@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getActingAdmin } from "@/lib/auth/admin";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 export default async function AdminLayout({
@@ -7,12 +7,11 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // An authenticated Supabase user is not automatically an admin: access
+  // requires an active row in public.admins.
+  const admin = await getActingAdmin();
 
-  if (!session) {
+  if (!admin) {
     redirect("/admin/login");
   }
 

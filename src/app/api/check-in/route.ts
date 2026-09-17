@@ -1,8 +1,16 @@
 import { serviceClient } from "@/lib/supabase/service";
 import { CheckInSchema } from "@/lib/validations/attendance";
+import { getActingAdmin } from "@/lib/auth/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  // Writing attendance is a staff action. Without this, anyone holding a
+  // qr_token could check any participant into any session.
+  const admin = await getActingAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const parsed = CheckInSchema.safeParse(body);
   if (!parsed.success) {
@@ -43,6 +51,9 @@ export async function POST(req: NextRequest) {
         session_id,
         programme_id,
         check_in_method,
+        // Who scanned. Previously never recorded, so no check-in could be
+        // traced back to an operator.
+        checked_in_by: admin.id,
         notes: notes ?? null,
         is_synced: true,
       });

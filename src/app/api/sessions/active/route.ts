@@ -1,12 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { serviceClient } from "@/lib/supabase/service";
 
 export const revalidate = 0;
 
+// Public by design — the landing page and scanner both need it — but served
+// with the service client so the anon key needs no table access of its own.
 export async function GET() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
+  const { data, error } = await serviceClient
     .from("sessions")
     .select(
       "*, session_programmes(programme_id, programmes(id, name, colour, is_default))"

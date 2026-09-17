@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { getActingAdmin } from "@/lib/auth/admin";
 import { todaySGT } from "@/lib/utils/format";
 import { SGT_TIMEZONE } from "@/lib/utils/constants";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
@@ -8,13 +8,8 @@ import { startOfMonth } from "date-fns";
 
 export async function GET() {
   // Auth check
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getActingAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // total_participants
   const { count: totalParticipants } = await serviceClient

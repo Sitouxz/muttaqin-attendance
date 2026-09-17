@@ -18,9 +18,11 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // getUser() revalidates the token with the auth server; getSession() would
+  // trust the request cookie as-is.
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return { response, user: session?.user ?? null };
+  return { response, user };
 }

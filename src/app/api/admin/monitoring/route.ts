@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { getActingAdmin } from "@/lib/auth/admin";
 import { formatInTimeZone } from "date-fns-tz";
 import { SGT_TIMEZONE } from "@/lib/utils/constants";
 
@@ -51,13 +51,8 @@ const CHECK_IN_METHOD_TEXT: Record<string, string> = {
 };
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getActingAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const requested = Number(request.nextUrl.searchParams.get("hours"));
   const hours = (ALLOWED_WINDOWS as readonly number[]).includes(requested)

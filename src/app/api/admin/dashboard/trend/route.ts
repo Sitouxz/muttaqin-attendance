@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { getActingAdmin } from "@/lib/auth/admin";
 import { subDays } from "date-fns";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { SGT_TIMEZONE } from "@/lib/utils/constants";
@@ -8,13 +8,8 @@ import { SGT_TIMEZONE } from "@/lib/utils/constants";
 export const revalidate = 300;
 
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const admin = await getActingAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const nowSGT = toZonedTime(new Date(), SGT_TIMEZONE);
   const thirtyDaysAgo = subDays(nowSGT, 30);

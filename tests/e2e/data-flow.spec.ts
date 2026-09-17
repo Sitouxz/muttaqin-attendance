@@ -3,7 +3,7 @@
  * of the Santunan Emas attendance app.
  *
  * Seeded data:
- *   Admin : admin@santunanemas.sg / Admin@2026!
+ *   Admin : set E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD in the environment
  *   Active session today: "Sesi Emas 25 Mac 2026" (Kuliah + Sewing)
  *   Participants: 25 (e.g. ahmad.yusof@gmail.com, siti.mdnoor@gmail.com …)
  *   Attendance: 8 checked-in for Kuliah today, 5 for Sewing today
@@ -12,8 +12,8 @@
 import { test, expect, type Page } from "@playwright/test";
 
 // ─── shared credentials ───────────────────────────────────────────────────────
-const ADMIN_EMAIL    = "admin@santunanemas.sg";
-const ADMIN_PASSWORD = "Admin@2026!";
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "";
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "";
 
 // A participant whose QR image was generated during seeding
 const PARTICIPANT_EMAIL = "siti.mdnoor@gmail.com";

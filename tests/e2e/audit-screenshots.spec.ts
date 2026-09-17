@@ -10,8 +10,10 @@ import * as path from "path";
 const OUT = path.join(process.cwd(), "test-results", "audit");
 fs.mkdirSync(OUT, { recursive: true });
 
-const ADMIN_EMAIL    = "admin@santunanemas.sg";
-const ADMIN_PASSWORD = "Admin@2026!";
+// Credentials come from the environment — never committed. Set E2E_ADMIN_EMAIL
+// and E2E_ADMIN_PASSWORD before running (see .env.example).
+const ADMIN_EMAIL    = process.env.E2E_ADMIN_EMAIL ?? "";
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "";
 
 async function shot(page: Page, name: string) {
   await page.screenshot({
@@ -50,6 +52,7 @@ test("04 Retrieve QR /retrieve-qr", async ({ page }) => {
 // ── SCANNER PAGES ─────────────────────────────────────────────────────────────
 
 test("05 QR Scanner /scan", async ({ page }) => {
+  await loginAsAdmin(page); // scanner is staff-only
   await page.goto("/scan");
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(1500); // camera permission prompt settles
@@ -57,6 +60,7 @@ test("05 QR Scanner /scan", async ({ page }) => {
 });
 
 test("06 Manual lookup /scan/manual", async ({ page }) => {
+  await loginAsAdmin(page); // scanner is staff-only
   await page.goto("/scan/manual");
   await page.waitForLoadState("networkidle");
   await shot(page, "06_scan_manual");

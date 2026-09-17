@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+import { mockAuthUser, ADMIN_ROW } from "../../helpers/admin-auth";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({
-    auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
-    },
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
   }),
 }));
 
@@ -15,12 +14,24 @@ vi.mock("@/lib/supabase/server", () => ({
  */
 function makeChain(result: unknown) {
   const chain: Record<string, unknown> = {};
-  const methods = ["select", "eq", "gte", "lte", "in", "is", "or", "order", "limit", "range"];
+  const methods = ["select", "eq", "gte", "lte", "in", "is", "or", "not", "order", "limit", "range", "single"];
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);
   }
   (chain as { then: unknown }).then = (resolve: (v: unknown) => unknown) =>
     Promise.resolve(result).then(resolve);
+  return chain;
+}
+
+/**
+ * The route reads `admins` twice: `.single()` for the auth guard (one row) and
+ * a plain select for operator names (a list). One stub, both shapes.
+ */
+function makeAdminsChain(rows: unknown[] = [{ id: "admin-1", full_name: "Ustaz Rahman" }]) {
+  const chain = makeChain({ data: rows, error: null }) as unknown as {
+    single: ReturnType<typeof vi.fn>;
+  };
+  chain.single = vi.fn().mockReturnValue(makeChain({ data: ADMIN_ROW, error: null }));
   return chain;
 }
 
@@ -31,14 +42,13 @@ vi.mock("@/lib/supabase/service", () => ({
 }));
 
 async function authenticate() {
-  const { createClient } = await import("@/lib/supabase/server");
-  vi.mocked(createClient).mockResolvedValue({
-    auth: {
-      getSession: vi.fn().mockResolvedValue({
-        data: { session: { user: { id: "user-1", email: "admin@test.com" } } },
-      }),
-    },
-  } as unknown as Awaited<ReturnType<typeof createClient>>);
+  await mockAuthUser({ id: "user-1", email: "admin@santunanemas.sg" });
+  // getActingAdmin() also needs an active admins row behind that auth user.
+  const { serviceClient } = await import("@/lib/supabase/service");
+  vi.mocked(serviceClient.from).mockImplementation(((table: string) =>
+    table === "admins"
+      ? makeAdminsChain()
+      : makeChain({ count: 0, data: [], error: null })) as unknown as typeof serviceClient.from);
 }
 
 function req(url = "http://localhost/api/admin/monitoring") {
@@ -52,10 +62,18 @@ describe("GET /api/admin/monitoring", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    const { createClient } = await import("@/lib/supabase/server");
-    vi.mocked(createClient).mockResolvedValue({
-      auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) },
-    } as unknown as Awaited<ReturnType<typeof createClient>>);
+    await mockAuthUser(null);
+
+    const { GET } = await import("@/app/api/admin/monitoring/route");
+    const res = await GET(req());
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for an auth user with no active admins row", async () => {
+    await mockAuthUser({ id: "user-1" });
+    const { serviceClient } = await import("@/lib/supabase/service");
+    vi.mocked(serviceClient.from).mockImplementation((() =>
+      makeChain({ data: null, error: null })) as unknown as typeof serviceClient.from);
 
     const { GET } = await import("@/app/api/admin/monitoring/route");
     const res = await GET(req());
@@ -161,9 +179,7 @@ describe("GET /api/admin/monitoring", () => {
         return makeChain({ count: 1, data: [{ participant_id: "p1" }], error: null });
       }
       if (table === "otp_requests") return makeChain({ data: [otp], error: null });
-      if (table === "admins") {
-        return makeChain({ data: [{ id: "admin-1", full_name: "Ustaz Rahman" }], error: null });
-      }
+      if (table === "admins") return makeAdminsChain();
       return makeChain({ count: 0, data: [], error: null });
     }) as unknown as typeof serviceClient.from);
 
@@ -206,6 +222,7 @@ describe("GET /api/admin/monitoring", () => {
 
     const { serviceClient } = await import("@/lib/supabase/service");
     vi.mocked(serviceClient.from).mockImplementation(((table: string) => {
+      if (table === "admins") return makeAdminsChain();
       if (table === "participants") {
         return makeChain({
           count: null,
@@ -231,6 +248,7 @@ describe("GET /api/admin/monitoring", () => {
     const { serviceClient } = await import("@/lib/supabase/service");
     let attendanceCalls = 0;
     vi.mocked(serviceClient.from).mockImplementation(((table: string) => {
+      if (table === "admins") return makeAdminsChain();
       if (table === "attendance") {
         attendanceCalls++;
         if (attendanceCalls === 1) {

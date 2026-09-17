@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { escapeFilterValue, getActingAdmin } from "@/lib/auth/admin";
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const admin = await getActingAdmin();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
@@ -26,8 +23,11 @@ export async function GET(request: NextRequest) {
     .range(from, to);
 
   if (q) {
+    // Quoted: an unquoted term containing , . ( ) would be parsed as filter
+    // syntax and could widen the query.
+    const term = escapeFilterValue(`%${q}%`);
     query = query.or(
-      `full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%,serial_code.ilike.%${q}%`
+      `full_name.ilike.${term},phone.ilike.${term},email.ilike.${term},serial_code.ilike.${term}`
     );
   }
 

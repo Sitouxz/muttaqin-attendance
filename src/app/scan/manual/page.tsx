@@ -28,7 +28,8 @@ interface Participant {
   id: string;
   full_name: string;
   phone: string;
-  qr_token: string;
+  // The lookup no longer returns qr_token — check-in goes by id.
+  serial_code: string;
 }
 
 export default function ManualPage() {
