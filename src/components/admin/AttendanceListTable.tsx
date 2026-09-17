@@ -15,7 +15,13 @@ interface AttendanceRow {
   id: string;
   checked_in_at: string;
   check_in_method: string;
-  participants: { full_name: string; email: string } | null;
+  participants: {
+    full_name: string;
+    email: string | null;
+    phone: string;
+    serial_code: string;
+    reg_channel: "email" | "whatsapp";
+  } | null;
   programmes: { name: string; colour: string } | null;
 }
 
@@ -58,12 +64,27 @@ export function AttendanceListTable({ sessionId }: AttendanceListTableProps) {
           <div className="text-xs text-[#173d35]/60 font-normal">Participant</div>
         </div>
       ),
-      cell: ({ row }) => (
-        <div>
-          <p className="font-medium text-sm">{row.original.participants?.full_name ?? "—"}</p>
-          <p className="text-xs text-[#173d35]/60">{row.original.participants?.email ?? ""}</p>
-        </div>
-      ),
+      // The code identifies everyone; the second line falls back to the phone
+      // for WhatsApp-route registrants, who have no email to show.
+      cell: ({ row }) => {
+        const p = row.original.participants;
+        return (
+          <div>
+            <p className="font-medium text-sm">{p?.full_name ?? "—"}</p>
+            <p className="text-xs text-[#173d35]/60">
+              {p ? (
+                <>
+                  <span className="font-mono tracking-wide">{p.serial_code}</span>
+                  {" · "}
+                  {p.email ?? `+65${p.phone}`}
+                </>
+              ) : (
+                ""
+              )}
+            </p>
+          </div>
+        );
+      },
     },
     {
       id: "programme",

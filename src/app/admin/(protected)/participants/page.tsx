@@ -21,6 +21,11 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { ParticipantForm } from "@/components/admin/ParticipantForm";
+import {
+  GENDER_LABELS,
+  PARTICIPANT_CATEGORY_LABELS,
+} from "@/lib/utils/constants";
+import type { ParticipantCategory } from "@/lib/validations/participant";
 
 interface ParticipantRow {
   id: string;
@@ -30,11 +35,14 @@ interface ParticipantRow {
   phone: string;
   age: number;
   gender: "male" | "female" | "unspecified";
+  participant_category: ParticipantCategory;
   postal_code: string;
   reg_channel: "email" | "whatsapp";
   wa_qr_pending: boolean;
   is_active: boolean;
   created_at: string;
+  qr_image_url: string | null;
+  qr_card_url: string | null;
 }
 
 export default function ParticipantsPage() {
@@ -181,37 +189,51 @@ export default function ParticipantsPage() {
       cell: ({ row }) => <span className="font-medium text-sm">{row.original.full_name}</span>,
     },
     {
-      accessorKey: "email",
+      accessorKey: "reg_channel",
+      header: () => (
+        <div>
+          <div className="font-bold text-[#173d35]">Channel</div>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const whatsapp = row.original.reg_channel === "whatsapp";
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                whatsapp ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700"
+              }`}
+            >
+              {whatsapp ? "WhatsApp" : "Email"}
+            </span>
+            {row.original.wa_qr_pending && (
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                QR pending
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "contact",
       header: () => (
         <div>
           <div className="font-bold text-[#173d35]">Contact</div>
         </div>
       ),
+      // WhatsApp-route registrants have no email, so the phone leads for them
+      // and the email line is simply absent rather than an empty column.
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.reg_channel === "whatsapp" || !row.original.email ? (
-            <>
-              {`WhatsApp · +65${row.original.phone}`}
-              {row.original.wa_qr_pending && (
-                <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                  QR pending
-                </span>
-              )}
-            </>
+        <div className="text-sm leading-tight">
+          <p className="text-[#173d35]">+65{row.original.phone}</p>
+          {row.original.email ? (
+            <p className="text-xs text-[#173d35]/60 break-all">{row.original.email}</p>
           ) : (
-            row.original.email
+            <p className="text-xs text-[#173d35]/40">No email</p>
           )}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "phone",
-      header: () => (
-        <div>
-          <div className="font-bold text-[#173d35]">Phone</div>
         </div>
       ),
-      cell: ({ row }) => <span className="text-sm">{row.original.phone}</span>,
     },
     {
       accessorKey: "age",
@@ -230,7 +252,23 @@ export default function ParticipantsPage() {
         </div>
       ),
       cell: ({ row }) => (
-        <span className="text-sm capitalize">{row.original.gender}</span>
+        <span className="text-sm">
+          {GENDER_LABELS[row.original.gender] ?? row.original.gender}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "participant_category",
+      header: () => (
+        <div>
+          <div className="font-bold text-[#173d35]">Category</div>
+        </div>
+      ),
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {PARTICIPANT_CATEGORY_LABELS[row.original.participant_category] ??
+            row.original.participant_category}
+        </span>
       ),
     },
     {
@@ -461,7 +499,7 @@ export default function ParticipantsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingParticipant} onOpenChange={(open) => !open && setEditingParticipant(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Participant</DialogTitle>
             <DialogDescription>

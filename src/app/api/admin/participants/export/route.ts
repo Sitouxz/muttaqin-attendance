@@ -4,6 +4,11 @@ import { serviceClient } from "@/lib/supabase/service";
 import * as XLSX from "xlsx";
 import { formatDateSGT } from "@/lib/utils/format";
 import { todaySGT } from "@/lib/utils/format";
+import {
+  GENDER_LABELS,
+  PARTICIPANT_CATEGORY_LABELS,
+  REG_CHANNEL_LABELS,
+} from "@/lib/utils/constants";
 
 export async function GET(_request: NextRequest) {
   const supabase = await createClient();
@@ -14,7 +19,9 @@ export async function GET(_request: NextRequest) {
 
   const { data: participants, error } = await serviceClient
     .from("participants")
-    .select("serial_code, full_name, email, phone, age, postal_code, reg_channel, created_at, is_active")
+    .select(
+      "serial_code, full_name, email, phone, age, gender, participant_category, postal_code, reg_channel, created_at, is_active",
+    )
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -24,8 +31,10 @@ export async function GET(_request: NextRequest) {
     "Full Name": p.full_name,
     Email: p.email ?? "",
     Phone: p.phone,
-    Channel: p.reg_channel,
+    Channel: REG_CHANNEL_LABELS[p.reg_channel] ?? p.reg_channel,
     Age: p.age,
+    Gender: GENDER_LABELS[p.gender] ?? p.gender,
+    Category: PARTICIPANT_CATEGORY_LABELS[p.participant_category] ?? p.participant_category,
     "Postal Code": p.postal_code,
     "Registered Date": formatDateSGT(p.created_at),
     Active: p.is_active ? "Yes" : "No",

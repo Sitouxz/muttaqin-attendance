@@ -52,6 +52,14 @@ export function statusCallbackUrl(participantId: string | undefined): string | u
   return `${base}/api/whatsapp/status?pid=${encodeURIComponent(participantId)}`;
 }
 
+/**
+ * One phone can carry several registrations (a household registering together),
+ * so a phone-keyed delivery sends every card on that number — bounded so one
+ * number can never pull an unbounded list. Shared with the chatbot lookup in
+ * `/api/whatsapp/claim-qr`.
+ */
+export const MAX_QR_CARDS_PER_PHONE = 5;
+
 export interface WhatsAppQrResult {
   delivered: boolean;
   reason?: "not_configured" | "send_failed" | "bad_media_url";

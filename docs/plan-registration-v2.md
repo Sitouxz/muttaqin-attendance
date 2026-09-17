@@ -254,6 +254,61 @@ scannable QR, so it was a route to checking in as another participant. Cards are
 - `cards/_sample.png` is left in place: it is synthetic (name "Nur Muhammad", not a participant) and
   `scripts/whatsapp-template-setup.mjs` submits it to Meta as the template's sample media.
 
+### 3.6d Client update (16 Sep 2026) — WhatsApp QR retrieval, month filter, participant fields
+
+Six follow-ups from the client comment on ClickUp [86ewztd4c](https://app.clickup.com/t/86ewztd4c):
+
+1. **"Dapatkan QR Saya" now covers the WhatsApp route.** The page opens on a channel toggle
+   (Emel / WhatsApp). Email keeps the OTP flow unchanged. WhatsApp asks only for the phone and
+   posts it to the new `POST /api/retrieve-qr/whatsapp`, which sends the card through the approved
+   template (§3.6c) to that number.
+
+   **No OTP on the WhatsApp route, deliberately.** The email route needs one because it renders the
+   card on screen for whoever asked; this route never does — the card only ever lands in the
+   WhatsApp account on the number typed in, so holding the phone *is* the check. The response
+   carries no card URL, name or serial, so a wrong number learns nothing past "that number is
+   registered". An OTP over WhatsApp would in any case need its own Meta-approved authentication
+   template, which does not exist on this WABA.
+
+   One phone can carry several registrations (a household), so every card on the number is sent,
+   capped by the shared `MAX_QR_CARDS_PER_PHONE` (5) that `/api/whatsapp/claim-qr` already used.
+   A registration whose card upload once failed is regenerated on the spot rather than left
+   unretrievable. When the template is unavailable or Twilio rejects the send, WhatsApp-route
+   registrants are re-armed `wa_qr_pending` and the page falls back to the wa.me prompt (§3.6b);
+   email-route registrants are never re-armed, since that flag drives the admin "QR pending" badge.
+   A best-effort 60s per-phone cooldown (in-memory, per instance) blocks double-taps; it is cleared
+   when nothing was delivered so a retry is not punished.
+
+2. **Sessions grouped by month, with a month filter.** `GET /api/admin/sessions` takes
+   `month=YYYY-MM` and returns a `months` list (each with a count) built from every session, so the
+   dropdown can offer "September 2026 Sessions (4)". The table inserts a month heading row at each
+   month boundary — rows already arrive newest-date-first, so each month's block is contiguous.
+
+3. **Missing participant fields restored.** `gender` and `participant_category` were never selected
+   by `GET /api/admin/participants` (the list's Gender column rendered blank) and were silently
+   dropped by `PATCH /api/admin/participants/[id]`, whose `allowedFields` never listed them — so
+   editing a gender appeared to work and changed nothing. Both are now selected, editable, shown on
+   the list and detail pages, and included in the XLSX export.
+
+4. **Channel-aware participant info.** The list replaces the duplicated Contact/Phone pair with a
+   Channel badge plus a contact cell that leads with the phone and says "No email" rather than
+   showing a blank. The detail page labels the phone "Phone (WhatsApp)" and the email
+   "Email (optional)" for WhatsApp-route registrants. The session attendance table showed an empty
+   second line for them; it now shows the serial code plus email-or-phone.
+
+5. **Edit-save fix.** The edit form marked email `required`, so a participant with no email could
+   not be saved at all — a name change was rejected on an empty email field. Email is optional in
+   the form now, and `PATCH` validates against a new `ParticipantUpdateSchema` that accepts `""`
+   or `null` and stores `NULL` (the `participants_contact_present` CHECK is still satisfied by the
+   always-present phone). The route previously wrote request fields through with no validation at
+   all; it now rejects a malformed email, gender or age instead of passing them to Postgres.
+
+6. **Code + QR where staff edit.** The edit dialog now carries a read-only panel with the serial
+   code, the card thumbnail, the registration channel and a download link, so staff can hand a card
+   out without leaving the list. *Assumption:* the client's screenshot for this point could not be
+   fetched (the ClickUp attachment host is blocked from the build environment), so this targets the
+   edit dialog — the page the preceding bullet is about. The detail page already carried both.
+
 ### 3.7 Admin dashboard
 - `GET /api/admin/participants` + `/[id]` selects → add `serial_code`, `qr_card_url`, `reg_channel`.
 - Participants list: `SE0001` column (mono), search `q` also matches `serial_code`.

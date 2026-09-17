@@ -21,3 +21,18 @@ export function formatTimeSGT(date: Date | string): string {
 export function todaySGT(): string {
   return formatSGT(new Date(), "yyyy-MM-dd");
 }
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/**
+ * "2026-09" -> "September 2026". Built from the string's own parts rather than
+ * a Date, so a month label can never slip across a timezone boundary.
+ */
+export function formatMonthLabel(month: string): string {
+  const [year, m] = month.split("-");
+  const name = MONTH_NAMES[Number(m) - 1];
+  return name && year ? `${name} ${year}` : month;
+}

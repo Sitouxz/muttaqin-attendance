@@ -7,7 +7,13 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { formatDateTimeSGT, formatDateSGT } from "@/lib/utils/format";
-import { CHECK_IN_METHOD_LABELS, type CheckInMethod } from "@/lib/utils/constants";
+import {
+  CHECK_IN_METHOD_LABELS,
+  GENDER_LABELS,
+  PARTICIPANT_CATEGORY_LABELS,
+  REG_CHANNEL_LABELS,
+  type CheckInMethod,
+} from "@/lib/utils/constants";
 
 interface Participant {
   id: string;
@@ -16,6 +22,8 @@ interface Participant {
   email: string | null;
   phone: string;
   age: number;
+  gender: "male" | "female" | "unspecified";
+  participant_category: string;
   postal_code: string;
   reg_channel: "email" | "whatsapp";
   wa_qr_pending: boolean;
@@ -125,14 +133,45 @@ export default function ParticipantDetailPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { my: "Saluran", en: "Channel", value: participant.reg_channel === "whatsapp" ? "WhatsApp" : "Email" },
-              { my: "E-mel", en: "Email", value: participant.email ?? "—" },
-              { my: "Telefon", en: "Phone", value: `+65${participant.phone}` },
-              { my: "Umur", en: "Age", value: String(participant.age) },
-              { my: "Poskod", en: "Postal Code", value: participant.postal_code },
-              { my: "Tarikh Daftar", en: "Registered", value: formatDateSGT(participant.created_at) },
+              {
+                key: "channel",
+                en: "Channel",
+                value: REG_CHANNEL_LABELS[participant.reg_channel] ?? participant.reg_channel,
+              },
+              // The QR reaches a WhatsApp registrant on their phone, so that is
+              // the contact staff should act on; email is only shown when there
+              // is one to show.
+              {
+                key: "email",
+                en: participant.reg_channel === "whatsapp" ? "Email (optional)" : "Email",
+                value: participant.email ?? "No email on file",
+              },
+              {
+                key: "phone",
+                en: participant.reg_channel === "whatsapp" ? "Phone (WhatsApp)" : "Phone",
+                value: `+65${participant.phone}`,
+              },
+              { key: "age", en: "Age", value: String(participant.age) },
+              {
+                key: "gender",
+                en: "Gender",
+                value: GENDER_LABELS[participant.gender] ?? participant.gender,
+              },
+              {
+                key: "category",
+                en: "Participant Category",
+                value:
+                  PARTICIPANT_CATEGORY_LABELS[participant.participant_category] ??
+                  participant.participant_category,
+              },
+              { key: "postal_code", en: "Postal Code", value: participant.postal_code },
+              {
+                key: "created_at",
+                en: "Registered",
+                value: formatDateSGT(participant.created_at),
+              },
             ].map((field) => (
-              <div key={field.my} className="bg-[#f0f4f3] rounded-lg p-3">
+              <div key={field.key} className="bg-[#f0f4f3] rounded-lg p-3">
                 <p className="text-xs font-bold text-[#173d35]/60 mb-1">{field.en}</p>
                 <p className="text-sm font-medium text-[#173d35]">{field.value}</p>
               </div>

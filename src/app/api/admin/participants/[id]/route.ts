@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { ParticipantUpdateSchema } from "@/lib/validations/participant";
 
 export async function GET(
   _request: NextRequest,
@@ -51,11 +52,20 @@ export async function PATCH(
   } = await supabase.auth.getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const allowedFields = ["full_name", "email", "phone", "age", "postal_code", "email_consent", "is_active"];
-  const updateData: Record<string, unknown> = {};
-  for (const key of allowedFields) {
-    if (key in body) updateData[key] = body[key];
+  const body = await request.json().catch(() => null);
+  const parsed = ParticipantUpdateSchema.safeParse(body ?? {});
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  // A cleared email means "no email", not the empty string: the column is
+  // nullable and WhatsApp-route registrants legitimately have none. Sending ""
+  // is what used to block saving an unrelated edit, such as a name change.
+  const updateData: Record<string, unknown> = { ...parsed.data };
+  if ("email" in updateData) updateData.email = updateData.email || null;
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 
   const { data, error } = await serviceClient

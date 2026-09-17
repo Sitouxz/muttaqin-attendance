@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { serviceClient } from "@/lib/supabase/service";
+import { MAX_QR_CARDS_PER_PHONE } from "@/lib/whatsapp/send-qr";
 
 /**
  * Called by the SE WhatsApp webhook (the Muttaqin Chatbot) when someone messages
@@ -37,8 +38,6 @@ function authorized(req: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
-/** Cards SE staff can hand out are capped so one phone can't pull an unbounded list. */
-const MAX_CARDS = 5;
 
 export async function POST(req: NextRequest) {
   if (!authorized(req)) {
@@ -84,7 +83,7 @@ export async function POST(req: NextRequest) {
       .eq("phone", phone8)
       .not("qr_card_url", "is", null)
       .order("created_at", { ascending: true })
-      .limit(MAX_CARDS);
+      .limit(MAX_QR_CARDS_PER_PHONE);
 
     const cards: CardPayload[] = (rows ?? []).map((r) => ({
       name: r.full_name,
