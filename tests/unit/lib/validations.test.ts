@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { RegisterSchema } from "@/lib/validations/participant";
+import {
+  ParticipantUpdateSchema,
+  RegisterSchema,
+  SgMobileSchema,
+} from "@/lib/validations/participant";
 
 describe("RegisterSchema", () => {
   const valid = {
@@ -84,5 +88,59 @@ describe("RegisterSchema", () => {
   it("rejects full_name shorter than 2 chars", () => {
     const r = RegisterSchema.safeParse({ ...valid, full_name: "A" });
     expect(r.success).toBe(false);
+  });
+});
+
+describe("SgMobileSchema", () => {
+  it.each([
+    ["91234567", "91234567"],
+    ["+65 9123 4567", "91234567"],
+    ["6591234567", "91234567"],
+    ["8123-4567", "81234567"],
+  ])("normalises %s to the stored 8 digits", (input, expected) => {
+    expect(SgMobileSchema.parse(input)).toBe(expected);
+  });
+
+  it.each(["61234567", "12345678", "9123456", "912345678", "abcdefgh"])(
+    "rejects %s",
+    (input) => {
+      expect(SgMobileSchema.safeParse(input).success).toBe(false);
+    },
+  );
+});
+
+describe("ParticipantUpdateSchema", () => {
+  it("accepts a name-only edit", () => {
+    const r = ParticipantUpdateSchema.safeParse({ full_name: "Nur Aisyah" });
+    expect(r.success).toBe(true);
+  });
+
+  // The client-reported bug: an empty email blocked saving an unrelated edit.
+  it("accepts an empty email alongside a name change", () => {
+    const r = ParticipantUpdateSchema.safeParse({ full_name: "Nur Aisyah", email: "" });
+    expect(r.success).toBe(true);
+  });
+
+  it("accepts a null email", () => {
+    const r = ParticipantUpdateSchema.safeParse({ email: null });
+    expect(r.success).toBe(true);
+  });
+
+  it("still rejects a malformed email", () => {
+    const r = ParticipantUpdateSchema.safeParse({ email: "not-an-email" });
+    expect(r.success).toBe(false);
+  });
+
+  it("accepts gender and participant_category, which used to be dropped", () => {
+    const r = ParticipantUpdateSchema.safeParse({
+      gender: "female",
+      participant_category: "warga_emas",
+    });
+    expect(r.success).toBe(true);
+    expect(r.data).toEqual({ gender: "female", participant_category: "warga_emas" });
+  });
+
+  it("rejects an unknown gender", () => {
+    expect(ParticipantUpdateSchema.safeParse({ gender: "other" }).success).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -27,6 +27,7 @@ import {
 import { Plus, Eye, Pencil, Ban } from "lucide-react";
 import Link from "next/link";
 import { SESSION_STATUSES } from "@/lib/utils/constants";
+import { formatMonthLabel } from "@/lib/utils/format";
 
 interface SessionRow {
   id: string;
@@ -40,12 +41,20 @@ interface SessionRow {
   session_agenda: Array<{ id: string; title: string; sort_order: number }>;
 }
 
+/** One entry per month that has sessions, newest first — drives the filter. */
+interface MonthOption {
+  month: string; // "YYYY-MM"
+  count: number;
+}
+
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [monthFilter, setMonthFilter] = useState<string>("all");
+  const [months, setMonths] = useState<MonthOption[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editSession, setEditSession] = useState<SessionRow | null>(null);
 
@@ -58,15 +67,17 @@ export default function SessionsPage() {
       page_size: String(pageSize),
     });
     if (statusFilter !== "all") params.set("status", statusFilter);
+    if (monthFilter !== "all") params.set("month", monthFilter);
 
     const res = await fetch(`/api/admin/sessions?${params}`);
     if (res.ok) {
       const json = await res.json();
       setSessions(json.sessions ?? []);
       setTotal(json.total ?? 0);
+      setMonths(json.months ?? []);
     }
     setLoading(false);
-  }, [page, statusFilter]);
+  }, [page, statusFilter, monthFilter]);
 
   useEffect(() => {
     fetchSessions();
@@ -222,6 +233,26 @@ export default function SessionsPage() {
             </SelectContent>
           </Select>
         </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-[#173d35]">Month:</span>
+          <Select
+            value={monthFilter}
+            onValueChange={(val) => { setMonthFilter(val); setPage(1); }}
+          >
+            <SelectTrigger className="w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All months</SelectItem>
+              {months.map((m) => (
+                <SelectItem key={m.month} value={m.month}>
+                  {`${formatMonthLabel(m.month)} Sessions (${m.count})`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Table */}
@@ -254,18 +285,34 @@ export default function SessionsPage() {
                   </td>
                 </tr>
               )}
-              {table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-[#f0f4f3] hover:bg-[#f0f4f3] transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-2.5 text-sm">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {table.getRowModel().rows.map((row, i) => {
+                // Rows arrive newest-date-first, so each month's block is
+                // contiguous and only its first row needs a heading.
+                const month = row.original.session_date.slice(0, 7);
+                const prev = table.getRowModel().rows[i - 1];
+                const newMonth = !prev || prev.original.session_date.slice(0, 7) !== month;
+                return (
+                  <Fragment key={row.id}>
+                    {newMonth && (
+                      <tr className="bg-[#f0f4f3]/60">
+                        <th
+                          colSpan={columns.length}
+                          className="px-4 py-2 text-left text-xs font-bold uppercase tracking-wide text-[#173d35]/70"
+                        >
+                          {formatMonthLabel(month)} Sessions
+                        </th>
+                      </tr>
+                    )}
+                    <tr className="border-b border-[#f0f4f3] hover:bg-[#f0f4f3] transition-colors">
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-2.5 text-sm">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         )}

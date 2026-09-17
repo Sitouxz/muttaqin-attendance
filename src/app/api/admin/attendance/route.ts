@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       participant_id,
       programme_id,
       session_id,
-      participants(full_name, email),
+      participants(full_name, email, phone, serial_code, reg_channel),
       programmes(name, colour),
       sessions(session_date)
       `,

@@ -21,3 +21,21 @@ export const CHECK_IN_METHOD_LABELS: Record<CheckInMethod, { my: string; en: str
 };
 
 export const SGT_TIMEZONE = "Asia/Singapore";
+
+export const GENDER_LABELS: Record<string, string> = {
+  male: "Male",
+  female: "Female",
+  unspecified: "Unspecified",
+};
+
+export const PARTICIPANT_CATEGORY_LABELS: Record<string, string> = {
+  warga_emas: "Senior Citizen",
+  penjaga: "Caregiver",
+  kedua_dua: "Both",
+  selain: "Others",
+};
+
+export const REG_CHANNEL_LABELS: Record<string, string> = {
+  email: "Email",
+  whatsapp: "WhatsApp",
+};

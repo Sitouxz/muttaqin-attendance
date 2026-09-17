@@ -18,6 +18,10 @@ import {
 } from "recharts";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { REGION_COLOURS } from "@/lib/utils/sg-regions";
+import {
+  GENDER_LABELS,
+  PARTICIPANT_CATEGORY_LABELS as CATEGORY_LABELS,
+} from "@/lib/utils/constants";
 
 const SingaporeLeafletMap = dynamic(
   () => import("@/components/admin/SingaporeLeafletMap").then((m) => m.SingaporeLeafletMap),
@@ -51,19 +55,6 @@ const GENDER_COLOURS: Record<string, string> = {
   male: "#3B82F6",
   female: "#EC4899",
   unspecified: "#9CA3AF",
-};
-
-const GENDER_LABELS: Record<string, string> = {
-  male: "Male",
-  female: "Female",
-  unspecified: "Unspecified",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  warga_emas: "Senior Citizen",
-  penjaga: "Caregiver",
-  kedua_dua: "Both",
-  selain: "Others",
 };
 
 const CATEGORY_COLOURS: Record<string, string> = {

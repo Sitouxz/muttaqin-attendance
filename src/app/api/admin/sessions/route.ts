@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase/service";
 import { getActingAdmin } from "@/lib/auth/admin";
 
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+/** "2026-12" -> "2027-01". Callers guard the format with MONTH_RE first. */
+function nextMonth(month: string): string {
+  const [year, m] = month.split("-").map(Number);
+  return m === 12
+    ? `${year + 1}-01`
+    : `${year}-${String(m + 1).padStart(2, "0")}`;
+}
+
 export async function GET(request: NextRequest) {
   const admin = await getActingAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -9,6 +19,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const date = searchParams.get("date");
+  const month = searchParams.get("month"); // "YYYY-MM"
   const page = parseInt(searchParams.get("page") ?? "1", 10);
   const pageSize = parseInt(searchParams.get("page_size") ?? "20", 10);
   const from = (page - 1) * pageSize;
@@ -36,11 +47,32 @@ export async function GET(request: NextRequest) {
 
   if (status) query = query.eq("status", status);
   if (date) query = query.eq("session_date", date);
+  if (month && MONTH_RE.test(month)) {
+    query = query
+      .gte("session_date", `${month}-01`)
+      .lt("session_date", `${nextMonth(month)}-01`);
+  }
 
   const { data, count, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ sessions: data ?? [], total: count ?? 0 });
+  // Months are for the filter's own dropdown, so they span every session
+  // regardless of the month currently selected (the status filter still
+  // applies — otherwise the dropdown would offer empty months).
+  let monthsQuery = serviceClient.from("sessions").select("session_date");
+  if (status) monthsQuery = monthsQuery.eq("status", status);
+  const { data: monthRows } = await monthsQuery;
+
+  const counts = new Map<string, number>();
+  for (const row of monthRows ?? []) {
+    const key = String(row.session_date).slice(0, 7);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const months = [...counts.entries()]
+    .map(([value, count]) => ({ month: value, count }))
+    .sort((a, b) => b.month.localeCompare(a.month));
+
+  return NextResponse.json({ sessions: data ?? [], total: count ?? 0, months });
 }
 
 export async function POST(request: NextRequest) {
