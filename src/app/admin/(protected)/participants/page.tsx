@@ -21,6 +21,8 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { ParticipantForm } from "@/components/admin/ParticipantForm";
+import { GENDER_LABELS, PARTICIPANT_CATEGORY_LABELS } from "@/lib/utils/constants";
+import type { Gender, ParticipantCategory } from "@/lib/validations/participant";
 
 interface ParticipantRow {
   id: string;
@@ -29,8 +31,9 @@ interface ParticipantRow {
   email: string | null;
   phone: string;
   age: number;
-  gender: "male" | "female" | "unspecified";
+  gender: Gender;
   postal_code: string;
+  participant_category: ParticipantCategory;
   reg_channel: "email" | "whatsapp";
   wa_qr_pending: boolean;
   is_active: boolean;
@@ -229,8 +232,28 @@ export default function ParticipantsPage() {
           <div className="font-bold text-[#173d35]">Gender</div>
         </div>
       ),
+      cell: ({ row }) => {
+        const gender = row.original.gender;
+        // Flagged rather than blank: an unspecified row predates the gender
+        // field and is something backend can now fix from the edit dialog.
+        return gender && gender !== "unspecified" ? (
+          <span className="text-sm">{GENDER_LABELS[gender]?.en ?? gender}</span>
+        ) : (
+          <span className="text-sm italic text-[#173d35]/40">Unspecified</span>
+        );
+      },
+    },
+    {
+      accessorKey: "participant_category",
+      header: () => (
+        <div>
+          <div className="font-bold text-[#173d35]">Category</div>
+        </div>
+      ),
       cell: ({ row }) => (
-        <span className="text-sm capitalize">{row.original.gender}</span>
+        <span className="text-sm">
+          {PARTICIPANT_CATEGORY_LABELS[row.original.participant_category]?.en ?? "—"}
+        </span>
       ),
     },
     {

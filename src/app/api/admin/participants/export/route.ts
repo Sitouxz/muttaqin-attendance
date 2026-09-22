@@ -4,6 +4,9 @@ import { serviceClient } from "@/lib/supabase/service";
 import * as XLSX from "xlsx";
 import { formatDateSGT } from "@/lib/utils/format";
 import { todaySGT } from "@/lib/utils/format";
+import { GENDER_LABELS, PARTICIPANT_CATEGORY_LABELS } from "@/lib/utils/constants";
+import type { Gender, ParticipantCategory } from "@/lib/validations/participant";
+import { getRegionFromPostalCode } from "@/lib/utils/sg-regions";
 
 export async function GET(_request: NextRequest) {
   const supabase = await createClient();
@@ -14,7 +17,9 @@ export async function GET(_request: NextRequest) {
 
   const { data: participants, error } = await serviceClient
     .from("participants")
-    .select("serial_code, full_name, email, phone, age, postal_code, reg_channel, created_at, is_active")
+    .select(
+      "serial_code, full_name, email, phone, age, gender, postal_code, participant_category, reg_channel, created_at, is_active",
+    )
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -26,7 +31,11 @@ export async function GET(_request: NextRequest) {
     Phone: p.phone,
     Channel: p.reg_channel,
     Age: p.age,
+    Gender: GENDER_LABELS[p.gender as Gender]?.en ?? "Unspecified",
+    "Participant Category":
+      PARTICIPANT_CATEGORY_LABELS[p.participant_category as ParticipantCategory]?.en ?? "",
     "Postal Code": p.postal_code,
+    Region: getRegionFromPostalCode(p.postal_code) ?? "",
     "Registered Date": formatDateSGT(p.created_at),
     Active: p.is_active ? "Yes" : "No",
   }));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { serviceClient } from "@/lib/supabase/service";
+import { ParticipantAdminUpdateSchema } from "@/lib/validations/participant";
 
 export async function GET(
   _request: NextRequest,
@@ -52,10 +53,20 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const allowedFields = ["full_name", "email", "phone", "age", "postal_code", "email_consent", "is_active"];
-  const updateData: Record<string, unknown> = {};
-  for (const key of allowedFields) {
-    if (key in body) updateData[key] = body[key];
+  // gender and participant_category were missing from the old allowlist, so the
+  // edit dialog posted them and the API silently dropped them -- which is why
+  // participants stayed "unspecified" no matter how often they were corrected.
+  const parsed = ParticipantAdminUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const updateData: Record<string, unknown> = { ...parsed.data };
+  // WhatsApp registrants have no email; keep that as NULL rather than "".
+  if ("email" in updateData) updateData.email = updateData.email || null;
+
+  if (Object.keys(updateData).length === 0) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 
   const { data, error } = await serviceClient

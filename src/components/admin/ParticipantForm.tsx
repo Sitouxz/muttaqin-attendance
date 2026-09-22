@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Switch } from "@/components/ui/switch";
-
-type Gender = "male" | "female" | "unspecified";
+import { GENDERS, PARTICIPANT_CATEGORIES, type Gender, type ParticipantCategory } from "@/lib/validations/participant";
+import { GENDER_LABELS, PARTICIPANT_CATEGORY_LABELS } from "@/lib/utils/constants";
 
 interface ParticipantFormData {
   id?: string;
@@ -17,8 +17,30 @@ interface ParticipantFormData {
   age: number;
   gender: Gender;
   postal_code: string;
+  participant_category: ParticipantCategory;
   is_active: boolean;
 }
+
+// A validation failure comes back as a zod flatten(), not a string -- render
+// the first field message rather than dropping an object into JSX.
+function readError(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const { fieldErrors, formErrors } = error as {
+      fieldErrors?: Record<string, string[] | undefined>;
+      formErrors?: string[];
+    };
+    const first =
+      Object.values(fieldErrors ?? {})
+        .flat()
+        .find(Boolean) ?? formErrors?.find(Boolean);
+    if (first) return first;
+  }
+  return "An error occurred";
+}
+
+const selectClass =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]";
 
 interface ParticipantFormProps {
   initialData?: ParticipantFormData;
@@ -37,6 +59,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
     age: initialData?.age ?? 18,
     gender: initialData?.gender ?? "unspecified",
     postal_code: initialData?.postal_code ?? "",
+    participant_category: initialData?.participant_category ?? "selain",
     is_active: initialData?.is_active ?? true,
   });
 
@@ -56,7 +79,7 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      setError(json.error ?? "An error occurred");
+      setError(readError(json.error));
       setLoading(false);
       return;
     }
@@ -89,12 +112,14 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
         <Input
           id="email"
           type="email"
-          required
           value={form.email}
           onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-          placeholder="admin@example.com"
+          placeholder="name@example.com"
           className="min-h-[48px]"
         />
+        <p className="text-xs text-[#173d35]/50">
+          Leave blank for participants who registered over WhatsApp.
+        </p>
       </div>
 
       {/* Phone & Age */}
@@ -150,13 +175,32 @@ export function ParticipantForm({ initialData, onSuccess, onCancel }: Participan
         </Label>
         <select
           id="gender"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[48px]"
+          className={selectClass}
           value={form.gender}
           onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as Gender }))}
         >
-          <option value="unspecified">Unspecified</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
+          {GENDERS.map((g) => (
+            <option key={g} value={g}>{GENDER_LABELS[g].en}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Participant Category */}
+      <div className="space-y-1">
+        <Label htmlFor="participant_category">
+          <span className="font-bold text-[#173d35]">Participant Category</span>
+        </Label>
+        <select
+          id="participant_category"
+          className={selectClass}
+          value={form.participant_category}
+          onChange={(e) =>
+            setForm((p) => ({ ...p, participant_category: e.target.value as ParticipantCategory }))
+          }
+        >
+          {PARTICIPANT_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{PARTICIPANT_CATEGORY_LABELS[c].en}</option>
+          ))}
         </select>
       </div>
 

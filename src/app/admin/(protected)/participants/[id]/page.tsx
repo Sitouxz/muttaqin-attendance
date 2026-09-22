@@ -7,7 +7,14 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { formatDateTimeSGT, formatDateSGT } from "@/lib/utils/format";
-import { CHECK_IN_METHOD_LABELS, type CheckInMethod } from "@/lib/utils/constants";
+import {
+  CHECK_IN_METHOD_LABELS,
+  GENDER_LABELS,
+  PARTICIPANT_CATEGORY_LABELS,
+  type CheckInMethod,
+} from "@/lib/utils/constants";
+import type { Gender, ParticipantCategory } from "@/lib/validations/participant";
+import { getRegionFromPostalCode } from "@/lib/utils/sg-regions";
 
 interface Participant {
   id: string;
@@ -16,7 +23,9 @@ interface Participant {
   email: string | null;
   phone: string;
   age: number;
+  gender: Gender;
   postal_code: string;
+  participant_category: ParticipantCategory;
   reg_channel: "email" | "whatsapp";
   wa_qr_pending: boolean;
   is_active: boolean;
@@ -124,17 +133,31 @@ export default function ParticipantDetailPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Everything the registration form collects, so backend never has
+                to cross-check a registrant against the form itself. */}
             {[
-              { my: "Saluran", en: "Channel", value: participant.reg_channel === "whatsapp" ? "WhatsApp" : "Email" },
-              { my: "E-mel", en: "Email", value: participant.email ?? "—" },
-              { my: "Telefon", en: "Phone", value: `+65${participant.phone}` },
-              { my: "Umur", en: "Age", value: String(participant.age) },
-              { my: "Poskod", en: "Postal Code", value: participant.postal_code },
-              { my: "Tarikh Daftar", en: "Registered", value: formatDateSGT(participant.created_at) },
+              { en: "Channel", value: participant.reg_channel === "whatsapp" ? "WhatsApp" : "Email" },
+              { en: "Email", value: participant.email ?? "—" },
+              { en: "Phone", value: `+65${participant.phone}` },
+              { en: "Age", value: String(participant.age) },
+              {
+                en: "Gender",
+                value: GENDER_LABELS[participant.gender]?.en ?? "Unspecified",
+                muted: participant.gender === "unspecified",
+              },
+              {
+                en: "Participant Category",
+                value: PARTICIPANT_CATEGORY_LABELS[participant.participant_category]?.en ?? "—",
+              },
+              { en: "Postal Code", value: participant.postal_code },
+              { en: "Region", value: getRegionFromPostalCode(participant.postal_code) ?? "—" },
+              { en: "Registered", value: formatDateSGT(participant.created_at) },
             ].map((field) => (
-              <div key={field.my} className="bg-[#f0f4f3] rounded-lg p-3">
+              <div key={field.en} className="bg-[#f0f4f3] rounded-lg p-3">
                 <p className="text-xs font-bold text-[#173d35]/60 mb-1">{field.en}</p>
-                <p className="text-sm font-medium text-[#173d35]">{field.value}</p>
+                <p className={`text-sm font-medium ${field.muted ? "text-[#173d35]/40 italic" : "text-[#173d35]"}`}>
+                  {field.value}
+                </p>
               </div>
             ))}
           </div>
