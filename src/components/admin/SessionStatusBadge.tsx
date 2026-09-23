@@ -7,7 +7,7 @@ interface SessionStatusBadgeProps {
 export function SessionStatusBadge({ status }: SessionStatusBadgeProps) {
   const label = SESSION_STATUS_LABELS[status as SessionStatus];
   const colour = label?.colour ?? "#6B7280";
-  const myLabel = label?.my ?? status;
+  // Admin-only surface, and the dashboard is English throughout.
   const enLabel = label?.en ?? status;
 
   return (
@@ -17,7 +17,7 @@ export function SessionStatusBadge({ status }: SessionStatusBadgeProps) {
       title={enLabel}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
-      {myLabel}
+      {enLabel}
     </span>
   );
 }

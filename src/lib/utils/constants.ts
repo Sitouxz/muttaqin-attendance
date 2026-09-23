@@ -12,7 +12,7 @@ export type CheckInMethod = (typeof CHECK_IN_METHODS)[number];
 export const SESSION_STATUS_LABELS: Record<SessionStatus, { my: string; en: string; colour: string }> = {
   draft:     { my: "Draf",      en: "Draft",     colour: "#6B7280" },
   active:    { my: "Aktif",     en: "Active",    colour: "#10B981" },
-  completed: { my: "Selesai",   en: "Completed", colour: "#3B82F6" },
+  completed: { my: "Selesai",   en: "Completed", colour: "#F59E0B" },
   cancelled: { my: "Dibatal",   en: "Cancelled", colour: "#EF4444" },
 };
 

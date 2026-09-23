@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Eye, Pencil, Ban } from "lucide-react";
 import Link from "next/link";
-import { SESSION_STATUSES } from "@/lib/utils/constants";
+import { SESSION_STATUSES, SESSION_STATUS_LABELS } from "@/lib/utils/constants";
 
 interface SessionRow {
   id: string;
@@ -217,7 +217,7 @@ export default function SessionsPage() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {SESSION_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{SESSION_STATUS_LABELS[s].en}</SelectItem>
               ))}
             </SelectContent>
           </Select>

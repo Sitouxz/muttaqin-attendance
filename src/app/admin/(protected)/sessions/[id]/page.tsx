@@ -4,10 +4,17 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { SessionStatusBadge } from "@/components/admin/SessionStatusBadge";
 import { AttendanceListTable } from "@/components/admin/AttendanceListTable";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SESSION_STATUSES, SESSION_STATUS_LABELS } from "@/lib/utils/constants";
 
 interface SessionDetail {
   id: string;
@@ -45,10 +52,9 @@ export default function SessionDetailPage() {
     fetchSession();
   }, [fetchSession]);
 
-  async function toggleStatus() {
-    if (!session) return;
+  async function changeStatus(newStatus: string) {
+    if (!session || newStatus === session.status) return;
     setToggling(true);
-    const newStatus = session.status === "active" ? "draft" : "active";
     await fetch(`/api/admin/sessions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -93,19 +99,23 @@ export default function SessionDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             <SessionStatusBadge status={session.status} />
-            {session.status !== "cancelled" && session.status !== "completed" && (
-              <Button
-                onClick={toggleStatus}
-                disabled={toggling}
-                size="sm"
-                variant="outline"
-                className="border-[#173d35] text-[#173d35]"
-              >
-                {toggling ? <LoadingSpinner size="sm" /> : (
-                  session.status === "active" ? "Set Draft" : "Set Active"
-                )}
-              </Button>
-            )}
+            <Select
+              value={session.status}
+              onValueChange={changeStatus}
+              disabled={toggling}
+            >
+              <SelectTrigger size="sm" className="w-36 border-[#173d35] text-[#173d35]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SESSION_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {SESSION_STATUS_LABELS[s].en}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {toggling && <LoadingSpinner size="sm" />}
           </div>
         </div>
 
