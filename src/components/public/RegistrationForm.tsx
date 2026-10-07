@@ -288,6 +288,15 @@ export function RegistrationForm() {
               <p className="font-semibold">E-mel sudah didaftarkan</p>
               <p className="text-sm opacity-80">Email already registered</p>
             </>
+          ) : serverError === "RATE_LIMIT_EXCEEDED" ? (
+            <>
+              <p className="font-semibold">
+                Terlalu banyak pendaftaran dari rangkaian ini. Sila cuba sebentar lagi.
+              </p>
+              <p className="text-sm opacity-80">
+                Too many registrations from this network. Please try again shortly.
+              </p>
+            </>
           ) : (
             <>
               <p className="font-semibold">Ralat berlaku. Sila cuba semula.</p>

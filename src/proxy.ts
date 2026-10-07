@@ -4,13 +4,19 @@ import { NextRequest, NextResponse } from "next/server";
 // In-memory rate limit store (per Vercel Edge instance)
 const rateLimitMap = new Map<string, number[]>();
 
+// Registrations per IP per hour. Mosque counters register many seniors from one
+// shared connection (a single public IP behind the router), so this must stay
+// well above a busy desk's hourly volume. It only exists to blunt scripted spam.
+const REGISTER_LIMIT_PER_HOUR =
+  Number(process.env.REGISTER_RATE_LIMIT_PER_HOUR) || 200;
+
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
   const windowMs = 60 * 60 * 1000; // 1 hour
   const hits = (rateLimitMap.get(ip) ?? []).filter((t) => now - t < windowMs);
   hits.push(now);
   rateLimitMap.set(ip, hits);
-  return hits.length > 10;
+  return hits.length > REGISTER_LIMIT_PER_HOUR;
 }
 
 export async function proxy(request: NextRequest) {
