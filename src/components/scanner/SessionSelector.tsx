@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { isMainSession } from "@/lib/sessions/weekly";
 
 interface Programme {
   id: string;
@@ -162,6 +163,7 @@ export function SessionSelector({ onSessionChange }: SessionSelectorProps) {
                   day: "numeric",
                 })}
                 {s.title ? ` — ${s.title}` : ""}
+                {isMainSession(s) ? " ⭐" : ""}
               </option>
             ))}
           </select>
@@ -174,6 +176,7 @@ export function SessionSelector({ onSessionChange }: SessionSelectorProps) {
               day: "numeric",
             })}
             {currentSession.title ? ` — ${currentSession.title}` : ""}
+            {isMainSession(currentSession) ? " ⭐" : ""}
           </p>
         )}
         <button

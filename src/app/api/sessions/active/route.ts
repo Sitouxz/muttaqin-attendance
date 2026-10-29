@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sortSessionsMainFirst } from "@/lib/sessions/weekly";
 
 export const revalidate = 0;
 
@@ -19,6 +20,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const sessions = data ?? [];
+  // The scanner defaults to the first session, so the kuliah must lead.
+  const sessions = sortSessionsMainFirst(data ?? []);
   return NextResponse.json({ sessions, session: sessions[0] ?? null });
 }
