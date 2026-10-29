@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { formatDateSGT } from "@/lib/utils/format";
+import { isMainSession } from "@/lib/sessions/weekly";
 
 interface Programme {
   id: string;
@@ -92,6 +93,11 @@ export default async function LandingPage() {
                 </div>
                 <p className="text-lg font-bold text-[#173d35] mb-1">
                   {session.title ?? "Sesi Hari Ini / Today's Session"}
+                  {isMainSession(session) && (
+                    <span role="img" aria-label="Program utama / Main programme" className="ml-1.5">
+                      ⭐
+                    </span>
+                  )}
                 </p>
                 <p className="text-sm text-[#173d35]/70 mb-4">
                   {formatDateSGT(session.session_date)}
